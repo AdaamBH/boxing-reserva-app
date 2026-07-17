@@ -1,0 +1,39 @@
+# Dependencias
+node_modules
+
+# Build
+dist
+dist-ssr
+*.local
+*.tsbuildinfo
+
+# Variables de entorno (nunca se commitea un .env real — ver DEPLOYMENT.md)
+.env
+.env.*
+!.env.example
+
+# Supabase local
+supabase/.branches
+supabase/.temp
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea
+
+# Sistema operativo
+.DS_Store
+
+# Logs
+npm-debug.log*
+*.log
+
+# Testing
+coverage
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+
+# Vercel
+.vercel

@@ -1,0 +1,29 @@
+@import 'tailwindcss';
+
+/* Variante 'dark' activable por clase (.dark en <html>), no por preferencia
+   del sistema — porque el modo oscuro será un interruptor dentro de la app
+   (Fase 8, ver TASK_WORKFLOW.md), no algo automático. No se usa todavía,
+   pero definirla ahora es gratis y evita tocar esto de nuevo cuando toque. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Design tokens del proyecto. Un único sitio para los colores de marca:
+   cuando tengas el nombre/logo definitivo del gimnasio (ver PROJECT_CONTEXT.md),
+   estos son los únicos valores que hay que tocar — ningún componente debería
+   tener un color "mágico" fuera de aquí (ver CODE_STYLE.md). */
+@theme {
+  --color-brand-50: oklch(0.97 0.02 25);
+  --color-brand-100: oklch(0.93 0.05 25);
+  --color-brand-500: oklch(0.55 0.22 25);
+  --color-brand-600: oklch(0.48 0.22 25);
+  --color-brand-700: oklch(0.4 0.2 25);
+
+  /* Estados de negocio: reutilizados en toda la app para reservas/aforo
+     (confirmada / en_espera / cancelada) — un único origen de verdad. */
+  --color-success-500: oklch(0.6 0.15 145);
+  --color-warning-500: oklch(0.75 0.15 80);
+  --color-danger-500: oklch(0.55 0.2 25);
+}
+
+body {
+  @apply bg-white text-slate-900 antialiased;
+}
