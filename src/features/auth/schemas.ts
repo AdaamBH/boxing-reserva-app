@@ -14,10 +14,15 @@ function isAtLeastAge(dateString: string, age: number): boolean {
     return false;
   }
   const today = new Date();
+  // Medianoche UTC del mismo día de calendario que vive el usuario en
+  // España (los componentes de fecha se leen en local — eso es "hoy" tal
+  // y como lo ve quien rellena el formulario), pero anclada a UTC para
+  // que coincida con cómo Date() interpreta "AAAA-MM-DD": como medianoche
+  // UTC, no local. Mezclar las dos anclas (lo que hacía la versión
+  // anterior) desplaza el corte por el huso horario local — hasta 2 horas
+  // en verano — y rechaza por error a quien cumple 18 justo hoy.
   const ageThreshold = new Date(
-    today.getFullYear() - age,
-    today.getMonth(),
-    today.getDate(),
+    Date.UTC(today.getFullYear() - age, today.getMonth(), today.getDate()),
   );
   return birthDate <= ageThreshold;
 }
