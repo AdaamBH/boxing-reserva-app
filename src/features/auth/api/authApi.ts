@@ -53,9 +53,17 @@ export async function signOut(): Promise<void> {
   }
 }
 
-/** Usado por la pantalla de "he olvidado mi contraseña" (siguiente sub-tarea). */
 export async function requestPasswordReset(email: string): Promise<void> {
-  const { error } = await supabase.auth.resetPasswordForEmail(email);
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${window.location.origin}/restablecer-contrasena`,
+  });
+  if (error) {
+    throw new Error(translateAuthError(error));
+  }
+}
+
+export async function updatePassword(newPassword: string): Promise<void> {
+  const { error } = await supabase.auth.updateUser({ password: newPassword });
   if (error) {
     throw new Error(translateAuthError(error));
   }

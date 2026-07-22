@@ -59,3 +59,36 @@ export const registerSchema = z
   });
 
 export type RegisterFormValues = z.infer<typeof registerSchema>;
+
+export const loginSchema = z.object({
+  email: z
+    .string()
+    .trim()
+    .min(1, 'El email es obligatorio')
+    .email('Introduce un email válido'),
+  password: z.string().min(1, 'La contraseña es obligatoria'),
+});
+
+export type LoginFormValues = z.infer<typeof loginSchema>;
+
+export const passwordResetRequestSchema = z.object({
+  email: z
+    .string()
+    .trim()
+    .min(1, 'El email es obligatorio')
+    .email('Introduce un email válido'),
+});
+
+export type PasswordResetRequestFormValues = z.infer<typeof passwordResetRequestSchema>;
+
+export const updatePasswordSchema = z
+  .object({
+    password: z.string().min(8, 'La contraseña debe tener al menos 8 caracteres'),
+    passwordConfirmation: z.string().min(1, 'Confirma tu contraseña'),
+  })
+  .refine((data) => data.password === data.passwordConfirmation, {
+    message: 'Las contraseñas no coinciden',
+    path: ['passwordConfirmation'],
+  });
+
+export type UpdatePasswordFormValues = z.infer<typeof updatePasswordSchema>;
