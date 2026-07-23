@@ -80,3 +80,7 @@ Una ruta relativa con más de un `../` está prohibida — si necesitas subir m�
 
 - Se escribe siempre la clase de Tailwind base pensando en pantalla pequeña primero, y se añaden variantes (`md:`, `lg:`) para pantallas mayores — nunca al revés (`lg:flex md:hidden` invertido rompe el principio).
 - Ningún componente nuevo se da por terminado sin comprobar su aspecto en un viewport de móvil real o emulado (ver `AI_REVIEW_CHECKLIST.md`).
+
+## TanStack Query: `mutationFn` siempre envuelto, nunca la función de API pasada directamente
+
+`useMutation({ mutationFn: miFuncionDeApi })` parece más corto que `useMutation({ mutationFn: (valores) => miFuncionDeApi(valores) })`, pero TanStack Query llama a `mutationFn` con un segundo argumento interno (contexto de la mutación: `client`, `meta`, `mutationKey`) que no forma parte del contrato de ninguna función de `api/`. Pasar la función directamente filtra ese detalle hacia código que no lo espera — funciona en producción (el argumento de más se ignora), pero rompe cualquier test que compruebe con qué argumentos se llamó al mock (detectado al escribir el test de `useAddDependent`). Siempre envolver: `mutationFn: (valores) => miFuncionDeApi(valores)`.

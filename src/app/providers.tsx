@@ -2,19 +2,23 @@ import type { ReactNode } from 'react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter } from 'react-router-dom';
 import { queryClient } from '@/lib/queryClient';
+import { SessionProvider } from '@/features/auth/hooks/SessionProvider';
 
 interface AppProvidersProps {
   children: ReactNode;
 }
 
-// Punto único donde se acumulan los providers globales de la aplicación.
-// Cuando llegue la Fase 1 (auth), el AuthProvider se añade aquí también,
-// envolviendo a `children` — así App.tsx no tiene que cambiar cada vez
-// que se añade un provider nuevo.
+// El orden entre QueryClientProvider y SessionProvider no importa en la
+// práctica (no dependen el uno del otro), pero SessionProvider envuelve a
+// BrowserRouter para que cualquier lógica de rutas futura (rutas
+// protegidas, redirecciones según sesión) pueda usar useSession/useAuth
+// sin cambiar nada aquí.
 export function AppProviders({ children }: AppProvidersProps) {
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>{children}</BrowserRouter>
+      <SessionProvider>
+        <BrowserRouter>{children}</BrowserRouter>
+      </SessionProvider>
     </QueryClientProvider>
   );
 }

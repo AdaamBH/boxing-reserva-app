@@ -1,13 +1,27 @@
 import { Routes, Route } from 'react-router-dom';
+import { RegisterPage } from '@/features/auth/components/RegisterPage';
+import { LoginPage } from '@/features/auth/components/LoginPage';
+import { PasswordResetRequestPage } from '@/features/auth/components/PasswordResetRequestPage';
+import { UpdatePasswordPage } from '@/features/auth/components/UpdatePasswordPage';
+import { AddDependentPage } from '@/features/dependents/components/AddDependentPage';
+import { ProtectedRoute } from '@/app/ProtectedRoute';
 
-// Placeholder de Fase 0: confirma que el andamiaje (Vite + React + Router)
-// funciona de principio a fin. Las rutas reales (login, listado de clases,
-// reservas, panel de admin...) se añaden a partir de la Fase 1, una por una,
-// según TASK_WORKFLOW.md — no se crean de golpe sin las pantallas detrás.
 export function AppRouter() {
   return (
     <Routes>
       <Route path="/" element={<HomePlaceholder />} />
+      <Route path="/registro" element={<RegisterPage />} />
+      <Route path="/iniciar-sesion" element={<LoginPage />} />
+      <Route path="/recuperar-contrasena" element={<PasswordResetRequestPage />} />
+      <Route path="/restablecer-contrasena" element={<UpdatePasswordPage />} />
+      <Route
+        path="/dependientes/nuevo"
+        element={
+          <ProtectedRoute>
+            <AddDependentPage />
+          </ProtectedRoute>
+        }
+      />
     </Routes>
   );
 }
