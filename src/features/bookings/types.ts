@@ -44,3 +44,9 @@ export interface CancelBookingParams {
 export interface LeaveWaitlistParams {
   waitlistEntryId: string;
 }
+
+// "Nombre I." (nombre + inicial del apellido) — mismo formato para todos,
+// adultos y menores, ya truncado por get_session_roster en la propia
+// base de datos (nunca se recibe el apellido completo de otra persona).
+export type RosterEntry =
+  Database['public']['Functions']['get_session_roster']['Returns'][number];

@@ -1,5 +1,6 @@
 import { screen } from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
+import userEvent from '@testing-library/user-event';
 import { render } from '@/test-utils';
 import { ClassSessionCard } from './ClassSessionCard';
 import type { ClassSessionWithTrainer } from '@/features/classes/types';
@@ -9,9 +10,11 @@ vi.mock('@/features/dependents/api/dependentsApi', () => ({
 }));
 vi.mock('@/features/bookings/api/bookingsApi', () => ({
   bookClassSession: vi.fn(),
+  fetchSessionRoster: vi.fn(),
 }));
 
 import { fetchMyDependents } from '@/features/dependents/api/dependentsApi';
+import { fetchSessionRoster } from '@/features/bookings/api/bookingsApi';
 
 const BASE_SESSION: ClassSessionWithTrainer = {
   id: '1',
@@ -32,6 +35,10 @@ describe('ClassSessionCard', () => {
   beforeEach(() => {
     vi.mocked(fetchMyDependents).mockReset();
     vi.mocked(fetchMyDependents).mockResolvedValue([]);
+    vi.mocked(fetchSessionRoster).mockReset();
+    vi.mocked(fetchSessionRoster).mockResolvedValue([
+      { estado: 'confirmada', display_name: 'Ana G.', orden: 1 },
+    ]);
   });
 
   it('muestra un texto de fallback cuando no hay entrenador disponible', () => {
@@ -50,5 +57,17 @@ describe('ClassSessionCard', () => {
     render(<ClassSessionCard session={BASE_SESSION} ocupadas={15} />);
 
     expect(screen.getByText('5 plazas libres')).toBeInTheDocument();
+  });
+
+  it('despliega la lista de la clase al pulsar el botón', async () => {
+    const user = userEvent.setup();
+    render(<ClassSessionCard session={BASE_SESSION} ocupadas={0} />);
+
+    expect(screen.queryByText('Dentro de la clase (1)')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Ver lista de la clase' }));
+
+    await screen.findByText('Dentro de la clase (1)');
+    expect(screen.getByText('1. Ana G.')).toBeInTheDocument();
   });
 });
