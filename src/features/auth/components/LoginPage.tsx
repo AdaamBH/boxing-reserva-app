@@ -1,12 +1,12 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { LoginForm } from '@/features/auth/components/LoginForm';
+import { AuthLayout } from '@/features/auth/components/AuthLayout';
 
 export function LoginPage() {
   const navigate = useNavigate();
 
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col justify-center gap-6 px-4 py-8">
-      <h1 className="text-center text-2xl font-semibold text-ink">Iniciar sesión</h1>
+    <AuthLayout title="Iniciar sesión">
       {/* SessionProvider recoge la sesión nueva solo con el listener de
           Supabase; no hace falta pasarle nada aquí, solo navegar. */}
       <LoginForm onSuccess={() => navigate('/clases')} />
@@ -18,6 +18,6 @@ export function LoginPage() {
           ¿No tienes cuenta? Regístrate
         </Link>
       </div>
-    </div>
+    </AuthLayout>
   );
 }
