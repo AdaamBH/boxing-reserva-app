@@ -16,6 +16,7 @@ dist-ssr
 supabase/.branches
 supabase/.temp
 supabase/snippets
+supabase/functions/.env*
 
 # Claude Code (config/skills locales, no forman parte del proyecto)
 .claude
