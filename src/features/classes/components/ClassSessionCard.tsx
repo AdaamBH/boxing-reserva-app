@@ -1,8 +1,11 @@
 import type { ClassSessionWithTrainer } from '@/features/classes/types';
 import { formatSpanishDate, formatTime } from '@/utils/formatDate';
+import { getRemainingSpots, isSessionFull, isSessionPast } from '@/utils/classSessions';
+import { BookClassSessionButton } from '@/features/bookings/components/BookClassSessionButton';
 
 interface ClassSessionCardProps {
   session: ClassSessionWithTrainer;
+  ocupadas: number;
 }
 
 const NIVEL_LABEL: Record<string, string> = {
@@ -11,8 +14,11 @@ const NIVEL_LABEL: Record<string, string> = {
   avanzado: 'Avanzado',
 };
 
-export function ClassSessionCard({ session }: ClassSessionCardProps) {
+export function ClassSessionCard({ session, ocupadas }: ClassSessionCardProps) {
   const trainerName = session.trainer?.nombre ?? 'entrenador por asignar';
+  const remainingSpots = getRemainingSpots(session.aforo_maximo, ocupadas);
+  const full = isSessionFull(session.aforo_maximo, ocupadas);
+  const past = isSessionPast(session.fecha, session.hora_inicio);
 
   return (
     <div className="flex flex-col gap-2 rounded-lg border border-slate-200 bg-white p-4">
@@ -27,9 +33,11 @@ export function ClassSessionCard({ session }: ClassSessionCardProps) {
         {formatTime(session.hora_fin)}
       </p>
       <p className="text-sm text-slate-600">Con {trainerName}</p>
-      {/* Aforo total, no "plazas restantes" — eso depende de bookings,
-          que no existe hasta Fase 3. */}
-      <p className="text-sm text-slate-500">Aforo: {session.aforo_maximo} plazas</p>
+      <p className="text-sm text-slate-500">
+        {full ? 'Clase llena' : `${remainingSpots} plazas libres`}
+      </p>
+
+      {!past && <BookClassSessionButton sessionId={session.id} />}
     </div>
   );
 }

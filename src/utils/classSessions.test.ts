@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { getRemainingSpots, isSessionFull } from '@/utils/classSessions';
+import {
+  canCancelBooking,
+  getRemainingSpots,
+  isSessionFull,
+  isSessionPast,
+} from '@/utils/classSessions';
 
 describe('getRemainingSpots', () => {
   it('calcula las plazas libres cuando quedan huecos', () => {
@@ -22,5 +27,41 @@ describe('isSessionFull', () => {
 
   it('es false cuando quedan plazas', () => {
     expect(isSessionFull(20, 19)).toBe(false);
+  });
+});
+
+describe('isSessionPast', () => {
+  const now = new Date('2026-07-20T18:00:00');
+
+  it('es true cuando la sesión ya ha empezado', () => {
+    expect(isSessionPast('2026-07-20', '17:00', now)).toBe(true);
+  });
+
+  it('es true justo en el instante de inicio (límite inclusivo)', () => {
+    expect(isSessionPast('2026-07-20', '18:00', now)).toBe(true);
+  });
+
+  it('es false cuando la sesión todavía no ha empezado', () => {
+    expect(isSessionPast('2026-07-20', '19:00', now)).toBe(false);
+  });
+});
+
+describe('canCancelBooking', () => {
+  const now = new Date('2026-07-20T18:00:00');
+
+  it('es true cuando faltan más de 1 hora para la clase', () => {
+    expect(canCancelBooking('2026-07-20', '19:30', now)).toBe(true);
+  });
+
+  it('es false cuando falta 1 hora exacta (límite no inclusivo)', () => {
+    expect(canCancelBooking('2026-07-20', '19:00', now)).toBe(false);
+  });
+
+  it('es false cuando falta menos de 1 hora', () => {
+    expect(canCancelBooking('2026-07-20', '18:30', now)).toBe(false);
+  });
+
+  it('es false cuando la clase ya ha empezado', () => {
+    expect(canCancelBooking('2026-07-20', '17:00', now)).toBe(false);
   });
 });
