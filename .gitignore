@@ -22,6 +22,9 @@ supabase/snippets
 .agents
 skills-lock.json
 
+# Notas de contexto para Claude Code, no se comitea (acordado)
+CLAUDE.md
+
 # Editor
 .vscode/*
 !.vscode/extensions.json
