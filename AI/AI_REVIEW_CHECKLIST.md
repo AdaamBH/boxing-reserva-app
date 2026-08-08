@@ -15,6 +15,7 @@ Checklist a repasar literalmente, punto por punto, antes de decir que una tarea 
 ## Seguridad (repasar `SECURITY.md`)
 
 - [ ] Si se creó una tabla nueva: tiene política de RLS explícita (no solo "activada por defecto sin políticas", que en Supabase equivale a bloquear todo — hay que verificar que hace exactamente lo que debe, ni más ni menos).
+- [ ] Si se creó una tabla nueva: tiene `GRANT` explícito para los roles de la Data API que deban alcanzarla (`authenticated`/`service_role`, ajustado a qué políticas de RLS existen para cada uno) — sin él, RLS nunca llega a evaluarse (ver `AI/DECISIONS.md`, "Descubierto: las tablas nuevas ya no se exponen a la Data API sin GRANT explícito").
 - [ ] Si se tocan reservas/aforo: pasa por la función atómica correspondiente, no por un INSERT/UPDATE directo.
 - [ ] Toda entrada de usuario se valida con Zod, tanto en frontend como en la Edge Function.
 - [ ] Ninguna clave secreta (service role, API key de Resend) aparece en código de cliente ni se ha commiteado un `.env` real.

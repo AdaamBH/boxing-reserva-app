@@ -75,3 +75,75 @@ Formato de cada entrada:
 **Alternativas consideradas:** Quitar `exactOptionalPropertyTypes` del `tsconfig.json` (descartada — está fijado como mínimo en `CODE_STYLE.md`, no es negociable por la comodidad de un formulario). Validar y convertir los números a mano fuera de Zod, sin `z.coerce` (descartada — duplica la conversión que Zod ya resuelve correctamente y abre la puerta a que un campo llegue a `onSubmit` como string sin que TypeScript lo detecte).
 
 **Consecuencias:** Cualquier formulario futuro con campos numéricos (por ejemplo, cantidades en la Fase de reservas si llegara a haberlas) sigue este mismo patrón de dos tipos por esquema — ver `ClassTemplateForm.tsx` y `OneOffClassSessionForm.tsx` como referencia.
+
+---
+
+## [2026-08-08] Errores de negocio de `book_class_session`/`cancel_booking`/`leave_waitlist`: SQLSTATE compartido `BK001`
+
+**Contexto:** Fase 3/4 introduce las primeras funciones RPC de Postgres con resultados de negocio que deben llegar al frontend como `{ success: false, error: { code, message } }` (regla ya fijada en `API_STANDARDS.md`/`ENGINEERING_RULES.md` para Edge Functions), pero `book_class_session`/`cancel_booking`/`leave_waitlist` son funciones `plpgsql` planas invocadas por `supabase.rpc(...)`, no Edge Functions — no había ningún precedente en el proyecto de cómo transportar un "esto es un resultado de negocio esperado, no un fallo de infraestructura" desde plpgsql hasta el resultado tipado del frontend.
+
+**Decisión:** Las funciones lanzan `raise exception using errcode = 'BK001', message = '<CODIGO>'` (p. ej. `'CANCELLATION_TOO_LATE'`). PostgREST expone esto como `PostgrestError` con `error.code = 'BK001'` y `error.message` igual al código exacto. `bookingsApi.ts` distingue `error.code === 'BK001'` (se traduce a `{ success: false, error: { code, message: <texto en español> } }`, con el texto centralizado en un único `Record<BookingErrorCode, string>`) de cualquier otro `error.code` (fallo de infraestructura real: se registra con `console.error` y se relanza como excepción genérica). Catálogo completo de códigos: `SESSION_NOT_FOUND`, `SESSION_CANCELLED`, `SESSION_IN_PAST`, `NOT_YOUR_DEPENDENT`, `ALREADY_BOOKED`, `BOOKING_NOT_FOUND`, `ALREADY_CANCELLED`, `CANCELLATION_TOO_LATE`.
+
+**Alternativas consideradas:** Un SQLSTATE distinto por cada código de error (descartada — ocho códigos custom no aportan nada frente a un único marcador "esto es un resultado de negocio deliberado" más un mensaje legible como identificador). Devolver un JSON serializado en el mensaje (descartada — complica el parseo en el cliente sin necesidad, el mensaje ya es el código en texto plano).
+
+**Consecuencias:** Cualquier función RPC futura con resultados de negocio (fuera de una Edge Function) sigue este mismo patrón: `errcode = 'BK001'` + el código como `message`. Si algún día se necesita distinguir categorías de error de negocio a nivel de transporte (no solo a nivel de código), este es el punto a revisar.
+
+---
+
+## [2026-08-08] Aforo ocupado vía función `SECURITY DEFINER`, no agregando `bookings` desde el cliente
+
+**Contexto:** `ClassSessionCard` necesita mostrar "plazas libres", pero la política de RLS de `bookings` (`bookings_select_own`) solo deja ver a cada usuario sus propias reservas y las de sus dependientes — un alumno nunca ve las reservas de otro, así que un `count()` client-side sobre `bookings` es estructuralmente imposible de calcular bien desde el cliente.
+
+**Decisión:** Función `get_session_occupancy(p_session_ids uuid[])`, `language sql security definer stable`, que devuelve `(session_id, ocupadas)` — mismo patrón que `is_admin()` (`SECURITY DEFINER` para saltarse RLS de forma puntual y controlada, sin exponer de quién son las reservas, solo el recuento).
+
+**Alternativas consideradas:** Vista SQL sobre `bookings` (descartada — el comportamiento de saltarse RLS de una vista depende de quién sea su propietario y de ajustes de Postgres que varían entre versiones; una función `SECURITY DEFINER` explícita es inequívoca). Desnormalizar un contador `ocupadas` en `class_sessions` mantenido por trigger (descartada — añade una fuente de verdad duplicada y una superficie nueva de bugs de sincronización para un cálculo que ya es trivial de hacer al vuelo dado el volumen de un único gimnasio).
+
+**Consecuencias:** Cualquier futura necesidad de "un dato agregado sobre una tabla que RLS oculta parcialmente" sigue este mismo patrón en vez de intentar resolverlo con políticas de RLS más permisivas (que filtrarían de más).
+
+---
+
+## [2026-08-08] `cancel_booking`: el admin se salta el límite de 1 hora y la comprobación de propiedad
+
+**Contexto:** No especificado en ningún documento de `AI/` — surgió al implementar `cancel_booking`: si el gimnasio cierra antes de tiempo o un entrenador cae de baja, alguien del staff necesita poder cancelar reservas de otros usuarios sin las restricciones pensadas para el autoservicio de un alumno.
+
+**Decisión:** `cancel_booking` comprueba `is_admin()` internamente; si es admin, omite tanto la comprobación de que la reserva pertenece al que llama como el límite de cancelación de 1 hora. La promoción de lista de espera ocurre igual en ambos casos.
+
+**Alternativas consideradas:** Una función administrativa separada (`admin_cancel_booking`) (descartada — duplicaría toda la lógica de promoción atómica sin necesidad; una sola función con una rama condicional es más fácil de mantener correcta).
+
+**Consecuencias:** Cualquier panel de admin futuro para gestionar reservas puede llamar a la misma `cancel_booking` sin lógica especial en el cliente.
+
+---
+
+## [2026-08-08] `leave_waitlist`: RPC añadida más allá del boceto original de `DATABASE.md`
+
+**Contexto:** `DATABASE.md` solo describe `book_class_session` y `cancel_booking`. Al construir `MyBookingsPage`, un usuario en lista de espera no tenía ninguna forma de salir de ella salvo esperar a ser promocionado — un callejón sin salida real de cara al usuario.
+
+**Decisión:** Función `leave_waitlist(p_waitlist_entry_id)`, sencilla (borra la propia entrada, o cualquiera si admin), no crítica en concurrencia (no compite por ningún recurso compartido, no necesita `for update`). Se añade en la misma migración que el resto de Fase 3/4 por cohesión, no en una migración aparte.
+
+**Alternativas consideradas:** Dejarlo fuera de esta fase y resolverlo más adelante (descartada — el coste de añadirlo ahora es mínimo y evita una regresión de UX evidente en la primera versión funcional).
+
+**Consecuencias:** Ninguna relevante — es la pieza más simple de las cuatro funciones nuevas.
+
+---
+
+## [2026-08-08] Los tests de integración contra Supabase local no están conectados a CI todavía
+
+**Contexto:** `TESTING.md` exige que `book_class_session`/`cancel_booking` se prueben contra un Supabase local real (Docker), no con mocks — la propiedad de concurrencia solo la demuestra Postgres de verdad. Ese es exactamente `npm run test:integration` (nuevo, `vitest.integration.config.ts` + `tests/integration/`). Levantar un stack de Supabase con Docker dentro de GitHub Actions es un bloque de trabajo propio, no trivial, y no estaba planificado para esta tarea.
+
+**Decisión:** `npm run test:integration` se documenta como paso manual obligatorio antes de abrir cualquier PR que toque `book_class_session`/`cancel_booking`/`leave_waitlist`, pero no se añade todavía a `.github/workflows/ci.yml`. Deuda técnica explícita, no una omisión silenciosa.
+
+**Alternativas consideradas:** Bloquear esta tarea hasta tener Supabase-en-Docker funcionando en CI (descartada — retrasaría significativamente llegar a una v1 funcional por una mejora de infraestructura de tests que no cambia la corrección del código en sí, solo la automatización de su verificación).
+
+**Consecuencias:** Sigue existiendo una ventana en la que alguien podría abrir un PR sin haber corrido `npm run test:integration` en local. Follow-up pendiente: añadir un job de CI con `supabase start` (o un Postgres efímero con las migraciones aplicadas) antes de considerar cerrado el tema de testing de Fase 3/4.
+
+---
+
+## [2026-08-08] Descubierto: las tablas nuevas ya no se exponen a la Data API sin `GRANT` explícito — migración de permisos retroactiva
+
+**Contexto:** Al escribir los primeros tests de integración de todo el proyecto (los primeros que hablan con un Supabase local real en vez de con mocks de Vitest), `book_class_session`/`cancel_booking` fallaban con `permission denied for table trainers` incluso usando la `service_role` key. La CLI de Supabase instalada (2.109.1) inicializa `supabase/config.toml` con `api.auto_expose_new_tables` sin fijar (por tanto `false`, el nuevo comportamiento por defecto tanto en local como "matching the new cloud default"): las tablas del esquema `public` ya NO son alcanzables por `anon`/`authenticated`/`service_role` sin un `GRANT` explícito, sin importar qué políticas de RLS tengan. Esto llevaba afectando en silencio a **todas** las tablas del proyecto (`profiles`, `dependents`, `trainers`, `class_templates`, `class_sessions`) desde que se crearon — nunca se había detectado porque ningún test anterior tocaba un Supabase local real, solo mocks.
+
+**Decisión:** Nueva migración `20260808110000_grant_data_api_privileges.sql` que concede explícitamente `SELECT`/`INSERT`/`UPDATE`/`DELETE` a `authenticated` y `service_role` en cada tabla, ajustado a las políticas de RLS que ya existían para cada una (p. ej. `profiles` solo `SELECT`+`UPDATE` para `authenticated`, sin `INSERT`/`DELETE`, porque nunca existió política para eso). El `GRANT` de base no abre nada por sí solo — RLS sigue denegando por defecto cualquier acción sin una política permisiva que la cubra; esto solo hace que las políticas que ya existían vuelvan a ser alcanzables.
+
+**Alternativas consideradas:** Fijar `api.auto_expose_new_tables = true` en `supabase/config.toml` para recuperar el comportamiento legacy (descartada — el propio comentario de la CLI marca ese campo como deprecado y con fecha de eliminación, 2026-10-30; depender de él sería aplazar el mismo problema, no resolverlo). Revertir solo para las tablas de Fase 3/4 y dejar Fase 1/2 rotas (descartada — la app ya no funcionaba en absoluto en local antes de este fix, no es un problema aislado de esta fase).
+
+**Consecuencias:** Cualquier tabla nueva que se cree a partir de ahora necesita su propio `GRANT` explícito en la misma migración que la crea — ya no es automático, ni en local ni (previsiblemente) en un proyecto cloud nuevo. Vale la pena añadir este punto al checklist de creación de tablas en `AI_REVIEW_CHECKLIST.md` en un futuro cercano.
