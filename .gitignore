@@ -15,6 +15,12 @@ dist-ssr
 # Supabase local
 supabase/.branches
 supabase/.temp
+supabase/snippets
+
+# Claude Code (config/skills locales, no forman parte del proyecto)
+.claude
+.agents
+skills-lock.json
 
 # Editor
 .vscode/*
