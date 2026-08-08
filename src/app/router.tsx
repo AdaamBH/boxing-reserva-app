@@ -8,6 +8,7 @@ import { ProtectedRoute } from '@/app/ProtectedRoute';
 import { AdminRoute } from '@/app/AdminRoute';
 import { ClassSessionsPage } from '@/features/classes/components/ClassSessionsPage';
 import { MyBookingsPage } from '@/features/bookings/components/MyBookingsPage';
+import { SessionRosterPage } from '@/features/bookings/components/SessionRosterPage';
 import { TrainersPage } from '@/features/trainers/components/TrainersPage';
 import { AdminHomePage } from '@/features/admin/components/AdminHomePage';
 import { ClassTemplatesPage } from '@/features/admin/components/ClassTemplatesPage';
@@ -34,6 +35,14 @@ export function AppRouter() {
         element={
           <ProtectedRoute>
             <MyBookingsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/clases/:sessionId/lista"
+        element={
+          <ProtectedRoute>
+            <SessionRosterPage />
           </ProtectedRoute>
         }
       />

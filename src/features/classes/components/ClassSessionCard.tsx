@@ -1,9 +1,8 @@
-import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import type { ClassSessionWithTrainer } from '@/features/classes/types';
 import { formatSpanishDate, formatTime } from '@/utils/formatDate';
 import { getRemainingSpots, isSessionFull, isSessionPast } from '@/utils/classSessions';
 import { BookClassSessionButton } from '@/features/bookings/components/BookClassSessionButton';
-import { SessionRosterList } from '@/features/bookings/components/SessionRosterList';
 
 interface ClassSessionCardProps {
   session: ClassSessionWithTrainer;
@@ -17,7 +16,6 @@ const NIVEL_LABEL: Record<string, string> = {
 };
 
 export function ClassSessionCard({ session, ocupadas }: ClassSessionCardProps) {
-  const [showRoster, setShowRoster] = useState(false);
   const trainerName = session.trainer?.nombre ?? 'entrenador por asignar';
   const remainingSpots = getRemainingSpots(session.aforo_maximo, ocupadas);
   const full = isSessionFull(session.aforo_maximo, ocupadas);
@@ -40,14 +38,12 @@ export function ClassSessionCard({ session, ocupadas }: ClassSessionCardProps) {
         {full ? 'Clase llena' : `${remainingSpots} plazas libres`}
       </p>
 
-      <button
-        type="button"
-        onClick={() => setShowRoster((prev) => !prev)}
+      <Link
+        to={`/clases/${session.id}/lista`}
         className="self-start text-sm font-medium text-rose-800 underline-offset-2 hover:underline"
       >
-        {showRoster ? 'Ocultar lista de la clase' : 'Ver lista de la clase'}
-      </button>
-      {showRoster && <SessionRosterList sessionId={session.id} />}
+        Ver lista de la clase
+      </Link>
 
       {!past && <BookClassSessionButton sessionId={session.id} />}
     </div>

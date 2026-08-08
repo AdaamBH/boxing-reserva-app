@@ -29,3 +29,21 @@ export async function fetchUpcomingClassSessions(): Promise<ClassSessionWithTrai
 
   return data as ClassSessionWithTrainer[];
 }
+
+export async function fetchClassSessionById(
+  sessionId: string,
+): Promise<ClassSessionWithTrainer> {
+  const { data, error } = await supabase
+    .from('class_sessions')
+    .select('*, trainer:trainers(*)')
+    .eq('id', sessionId)
+    .single();
+
+  if (error) {
+    throw new Error(
+      'No se ha podido cargar la clase. Inténtalo de nuevo en unos segundos.',
+    );
+  }
+
+  return data as ClassSessionWithTrainer;
+}
