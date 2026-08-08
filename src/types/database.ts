@@ -350,6 +350,14 @@ export type Database = {
           session_id: string;
         }[];
       };
+      get_session_roster: {
+        Args: { p_session_id: string };
+        Returns: {
+          display_name: string;
+          estado: string;
+          orden: number;
+        }[];
+      };
       is_admin: { Args: never; Returns: boolean };
       leave_waitlist: {
         Args: { p_waitlist_entry_id: string };

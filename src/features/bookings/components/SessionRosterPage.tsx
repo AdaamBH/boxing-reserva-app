@@ -1,0 +1,39 @@
+import { Link, useParams } from 'react-router-dom';
+import { useClassSession } from '@/features/classes/hooks/useClassSession';
+import { SessionRosterList } from '@/features/bookings/components/SessionRosterList';
+import { formatSpanishDate, formatTime } from '@/utils/formatDate';
+
+export function SessionRosterPage() {
+  const { sessionId } = useParams<{ sessionId: string }>();
+  const { data: session, isLoading, error } = useClassSession(sessionId ?? '');
+
+  if (!sessionId) {
+    return null;
+  }
+
+  return (
+    <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-4 py-8">
+      <Link to="/clases" className="text-sm font-medium text-rose-800 hover:underline">
+        ← Volver a clases
+      </Link>
+
+      {isLoading && <p className="text-sm text-slate-500">Cargando…</p>}
+      {error && (
+        <p role="alert" className="text-sm text-red-600">
+          No se ha podido cargar la clase. Inténtalo de nuevo en unos segundos.
+        </p>
+      )}
+      {session && (
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl font-semibold text-slate-900">{session.nombre}</h1>
+          <p className="text-sm text-slate-600">
+            {formatSpanishDate(session.fecha)} · {formatTime(session.hora_inicio)}–
+            {formatTime(session.hora_fin)}
+          </p>
+        </div>
+      )}
+
+      <SessionRosterList sessionId={sessionId} />
+    </div>
+  );
+}

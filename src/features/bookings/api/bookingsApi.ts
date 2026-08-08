@@ -7,6 +7,7 @@ import type {
   BookingWithSession,
   CancelBookingParams,
   LeaveWaitlistParams,
+  RosterEntry,
   WaitlistEntryWithSession,
 } from '@/features/bookings/types';
 
@@ -184,4 +185,18 @@ export async function fetchSessionOccupancy(
   }
 
   return Object.fromEntries(data.map((row) => [row.session_id, row.ocupadas]));
+}
+
+export async function fetchSessionRoster(sessionId: string): Promise<RosterEntry[]> {
+  const { data, error } = await supabase.rpc('get_session_roster', {
+    p_session_id: sessionId,
+  });
+
+  if (error) {
+    throw new Error(
+      'No se ha podido cargar la lista de la clase. Inténtalo de nuevo en unos segundos.',
+    );
+  }
+
+  return data;
 }

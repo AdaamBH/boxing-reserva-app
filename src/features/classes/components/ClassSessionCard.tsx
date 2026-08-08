@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import type { ClassSessionWithTrainer } from '@/features/classes/types';
 import { formatSpanishDate, formatTime } from '@/utils/formatDate';
 import { getRemainingSpots, isSessionFull, isSessionPast } from '@/utils/classSessions';
@@ -36,6 +37,13 @@ export function ClassSessionCard({ session, ocupadas }: ClassSessionCardProps) {
       <p className="text-sm text-slate-500">
         {full ? 'Clase llena' : `${remainingSpots} plazas libres`}
       </p>
+
+      <Link
+        to={`/clases/${session.id}/lista`}
+        className="self-start text-sm font-medium text-rose-800 underline-offset-2 hover:underline"
+      >
+        Ver lista de la clase
+      </Link>
 
       {!past && <BookClassSessionButton sessionId={session.id} />}
     </div>
