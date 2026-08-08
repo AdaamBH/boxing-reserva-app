@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Link } from 'react-router-dom';
 import { bookingBeneficiarySchema } from '@/features/bookings/schemas';
 import type { BookingBeneficiaryFormValues } from '@/features/bookings/schemas';
 import { useBookClassSession } from '@/features/bookings/hooks/useBookClassSession';
@@ -72,6 +73,16 @@ export function BookClassSessionButton({
           {...register('beneficiary')}
         />
       )}
+
+      {/* Única forma de llegar a /dependientes/nuevo desde la app: sin este
+          enlace la ruta solo era alcanzable escribiendo la URL a mano
+          (detectado por pruebas automatizadas — ver DECISIONS.md). */}
+      <Link
+        to="/dependientes/nuevo"
+        className="self-start text-sm font-medium text-brand-600 underline-offset-2 hover:underline"
+      >
+        ¿Reservas para un menor a tu cargo? Añade un dependiente
+      </Link>
 
       <Button type="submit" isLoading={isPending} disabled={disabled}>
         Reservar
