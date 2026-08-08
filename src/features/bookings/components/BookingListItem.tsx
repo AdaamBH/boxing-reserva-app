@@ -30,9 +30,9 @@ export function BookingListItem({ booking }: BookingListItemProps) {
   }
 
   return (
-    <div className="flex flex-col gap-2 rounded-lg border border-slate-200 bg-white p-4">
-      <p className="font-medium text-slate-900">{session.nombre}</p>
-      <p className="text-sm text-slate-600">
+    <div className="flex flex-col gap-2 rounded-xl border border-line bg-canvas-raised p-4">
+      <p className="font-semibold text-ink">{session.nombre}</p>
+      <p className="text-sm text-ink-muted">
         {formatSpanishDate(session.fecha)} · {formatTime(session.hora_inicio)}–
         {formatTime(session.hora_fin)}
       </p>
@@ -46,7 +46,7 @@ export function BookingListItem({ booking }: BookingListItemProps) {
         {cancellable ? 'Cancelar' : 'Ya no se puede cancelar (falta menos de 1h)'}
       </Button>
       {error && (
-        <p role="alert" className="text-sm text-red-600">
+        <p role="alert" className="text-sm text-danger-500">
           {error}
         </p>
       )}

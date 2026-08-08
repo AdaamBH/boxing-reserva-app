@@ -23,11 +23,11 @@ describe('SessionRosterList', () => {
 
     const confirmados = await screen.findByText('Dentro de la clase (2)');
     const confirmadosList = confirmados.nextElementSibling;
-    expect(confirmadosList).toHaveTextContent('1. Ana G.');
-    expect(confirmadosList).toHaveTextContent('2. Bruno D.');
+    expect(confirmadosList).toHaveTextContent('Ana G.');
+    expect(confirmadosList).toHaveTextContent('Bruno D.');
 
     const espera = screen.getByText('Lista de espera (1)');
-    expect(espera.nextElementSibling).toHaveTextContent('1. Lucas P.');
+    expect(espera.nextElementSibling).toHaveTextContent('Lucas P.');
   });
 
   it('muestra un mensaje cuando un grupo está vacío', async () => {

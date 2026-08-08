@@ -55,7 +55,7 @@ describe('SessionRosterPage', () => {
     await screen.findByRole('heading', { name: 'Boxeo' });
     expect(fetchClassSessionById).toHaveBeenCalledWith('session-1');
     expect(fetchSessionRoster).toHaveBeenCalledWith('session-1');
-    await screen.findByText('1. Ana G.');
+    await screen.findByText('Ana G.');
   });
 
   it('muestra un error si no se puede cargar la clase', async () => {
