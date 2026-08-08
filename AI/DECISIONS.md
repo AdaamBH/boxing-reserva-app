@@ -147,3 +147,27 @@ Formato de cada entrada:
 **Alternativas consideradas:** Fijar `api.auto_expose_new_tables = true` en `supabase/config.toml` para recuperar el comportamiento legacy (descartada — el propio comentario de la CLI marca ese campo como deprecado y con fecha de eliminación, 2026-10-30; depender de él sería aplazar el mismo problema, no resolverlo). Revertir solo para las tablas de Fase 3/4 y dejar Fase 1/2 rotas (descartada — la app ya no funcionaba en absoluto en local antes de este fix, no es un problema aislado de esta fase).
 
 **Consecuencias:** Cualquier tabla nueva que se cree a partir de ahora necesita su propio `GRANT` explícito en la misma migración que la crea — ya no es automático, ni en local ni (previsiblemente) en un proyecto cloud nuevo. Vale la pena añadir este punto al checklist de creación de tablas en `AI_REVIEW_CHECKLIST.md` en un futuro cercano.
+
+---
+
+## [2026-08-08] Envío de emails: Edge Function invocada por el cliente tras el RPC, no trigger de base de datos con `pg_net`
+
+**Contexto:** `AI/ARCHITECTURE.md` esboza el envío de emails de cancelación/promoción como "S->>F: Trigger de inserción en waitlist" en el diagrama de secuencia, sugiriendo un trigger de Postgres. Al implementarlo, un trigger sobre `INSERT` en `bookings` resulta ambiguo: tanto una reserva nueva confirmada como una promoción desde lista de espera insertan una fila con `estado = 'confirmada'` con la misma forma — no hay manera de distinguirlas solo con un trigger sin añadir una columna nueva. La alternativa "correcta" con las primitivas de Supabase (`pg_net.http_post` con el `service_role` key almacenado en Vault, más resolver la URL base de las Edge Functions, distinta en local y en cloud) añadía bastante infraestructura nueva (Vault, gestión de URLs por entorno) para el beneficio de dos emails no críticos.
+
+**Decisión:** `cancel_booking` (ya `RETURNS TABLE (promoted boolean, promoted_booking_id uuid)`, migración `20260808120000`) no llama a nada por sí misma. El **cliente**, justo después de recibir un `cancel_booking` con éxito, invoca `send_cancellation_email` siempre, y `send_waitlist_promotion_email` solo si `promoted_booking_id` no es null (`bookingsApi.ts`, `notifyBookingEvent`). Ambas llamadas son best-effort: un fallo se registra con `console.error` y nunca se propaga como si la cancelación hubiera fallado — la reserva ya está cancelada/promocionada en base de datos pase lo que pase con el email.
+
+**Alternativas consideradas:** Trigger + `pg_net.http_post` con service_role en Vault (descartada por la ambigüedad de "quién insertó esto" explicada arriba, y por la complejidad añadida de gestionar Vault + URLs de Edge Function por entorno solo para esto). Añadir una columna `promoted_at`/`is_promotion` a `bookings` para desambiguar y sí poder usar un trigger (descartada — resuelve la ambigüedad pero sigue arrastrando el problema de la URL base por entorno, y añade una columna cuyo único propósito es servir de bandera para un trigger).
+
+**Consecuencias:** Si algún día el cliente pudiera "desaparecer" justo después de una cancelación (cierre de pestaña en el instante exacto, caída de red) antes de que la llamada a la Edge Function salga, ese email no se envía — aceptable para un email transaccional no crítico en el MVP, pero si en el futuro se necesita una garantía más fuerte de entrega, esta es la costura por la que migrar a un trigger de base de datos (con la columna de desambiguación) sería la vía.
+
+---
+
+## [2026-08-08] Formateo de fecha/hora duplicado entre frontend y Edge Functions, sin extraerlo a código compartido
+
+**Contexto:** `formatSpanishDate`/`formatTime` ya existen en `src/utils/formatDate.ts` para el frontend. Las plantillas de email de las Edge Functions necesitan el mismo formateo, pero las Edge Functions corren en Deno (runtime aparte, sin acceso directo al árbol `src/` de Vite/Node sin montar un import map compartido entre ambos).
+
+**Decisión:** Duplicar las dos funciones (5 líneas en total) en `supabase/functions/_shared/formatDate.ts`, con un comentario explícito señalando que es una duplicación deliberada. `CODE_STYLE.md` prohíbe duplicar *lógica de negocio* entre frontend y Edge Function sin compartirla — un formateador de fecha puramente de presentación, sin ninguna regla de negocio dentro, se interpreta aquí como fuera de esa prohibición.
+
+**Alternativas consideradas:** Montar un import map o publicar un paquete interno compartido entre el proyecto Vite y las Edge Functions Deno (descartada — infraestructura desproporcionada para 5 líneas sin lógica real, YAGNI).
+
+**Consecuencias:** Si `formatSpanishDate`/`formatTime` cambiaran de comportamiento en el frontend, alguien tiene que acordarse de replicar el cambio en `supabase/functions/_shared/formatDate.ts` a mano — riesgo pequeño y explícitamente aceptado dado lo trivial de la función.
