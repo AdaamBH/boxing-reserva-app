@@ -38,11 +38,15 @@ describe('cancel_booking', () => {
 
     const { data: confirmedBookings } = await adminClient
       .from('bookings')
-      .select('user_id')
+      .select('id, user_id')
       .eq('session_id', sessionId)
       .eq('estado', 'confirmada');
     expect(confirmedBookings).toHaveLength(1);
     expect(confirmedBookings?.[0]?.user_id).toBe(userB.id);
+    // El id que devuelve la RPC es justo el que usará el email de
+    // promoción para saber a quién notificar (Fase 5) — no basta con que
+    // "alguien" se haya promocionado, tiene que ser este id exacto.
+    expect(cancelResult?.[0]?.promoted_booking_id).toBe(confirmedBookings?.[0]?.id);
 
     const { data: waitlist } = await adminClient
       .from('waitlist_entries')

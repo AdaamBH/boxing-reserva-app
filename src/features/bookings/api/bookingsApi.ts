@@ -67,6 +67,22 @@ export async function bookClassSession({
   return { success: true, data: data as 'confirmada' | 'en_espera' };
 }
 
+// Best-effort a propósito: un fallo enviando el email de notificación
+// nunca debe hacer parecer que la cancelación en sí ha fallado — la
+// reserva ya está cancelada (o promocionada) en la base de datos pase lo
+// que pase aquí. Se registra el error y no se relanza.
+async function notifyBookingEvent(
+  functionName: 'send_cancellation_email' | 'send_waitlist_promotion_email',
+  bookingId: string,
+): Promise<void> {
+  const { error } = await supabase.functions.invoke(functionName, {
+    body: { bookingId },
+  });
+  if (error) {
+    console.error(error);
+  }
+}
+
 export async function cancelBooking({
   bookingId,
 }: CancelBookingParams): Promise<BookingResult<{ promoted: boolean }>> {
@@ -84,7 +100,19 @@ export async function cancelBooking({
     );
   }
 
-  return { success: true, data: { promoted: data[0]?.promoted ?? false } };
+  const result = data[0];
+  // El tipo generado marca `promoted_booking_id` como `string` no
+  // opcional, pero la función SQL sí puede devolver null (sin nadie que
+  // promocionar) — supabase gen types no infiere esa nulabilidad para
+  // `returns table`.
+  const promotedBookingId = (result?.promoted_booking_id ?? null) as string | null;
+
+  await notifyBookingEvent('send_cancellation_email', bookingId);
+  if (promotedBookingId) {
+    await notifyBookingEvent('send_waitlist_promotion_email', promotedBookingId);
+  }
+
+  return { success: true, data: { promoted: result?.promoted ?? false } };
 }
 
 export async function leaveWaitlist({
