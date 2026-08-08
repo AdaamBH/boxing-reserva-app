@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { MemoryRouter } from 'react-router-dom';
+import type { ComponentProps } from 'react';
 import { render, screen } from '@/test-utils';
 import userEvent from '@testing-library/user-event';
 import { BookClassSessionButton } from './BookClassSessionButton';
@@ -12,6 +14,17 @@ vi.mock('@/features/dependents/api/dependentsApi', () => ({
   fetchMyDependents: vi.fn(),
 }));
 
+// BookClassSessionButton renderiza un <Link> (enlace a "Añadir
+// dependiente"), que necesita un Router alrededor para no lanzar —
+// MemoryRouter en cada render, igual que en ClassSessionCard.test.tsx.
+function renderButton(props: ComponentProps<typeof BookClassSessionButton>) {
+  return render(
+    <MemoryRouter>
+      <BookClassSessionButton {...props} />
+    </MemoryRouter>,
+  );
+}
+
 describe('BookClassSessionButton', () => {
   beforeEach(() => {
     vi.mocked(bookClassSession).mockReset();
@@ -23,7 +36,7 @@ describe('BookClassSessionButton', () => {
     vi.mocked(bookClassSession).mockResolvedValue({ success: true, data: 'confirmada' });
     const user = userEvent.setup();
 
-    render(<BookClassSessionButton sessionId="session-1" />);
+    renderButton({ sessionId: 'session-1' });
     expect(screen.queryByLabelText('¿Para quién es la reserva?')).not.toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Reservar' }));
@@ -51,7 +64,7 @@ describe('BookClassSessionButton', () => {
     vi.mocked(bookClassSession).mockResolvedValue({ success: true, data: 'en_espera' });
     const user = userEvent.setup();
 
-    render(<BookClassSessionButton sessionId="session-1" />);
+    renderButton({ sessionId: 'session-1' });
     await user.selectOptions(
       await screen.findByLabelText('¿Para quién es la reserva?'),
       'dep-1',
@@ -75,7 +88,7 @@ describe('BookClassSessionButton', () => {
     });
     const user = userEvent.setup();
 
-    render(<BookClassSessionButton sessionId="session-1" />);
+    renderButton({ sessionId: 'session-1' });
     await user.click(screen.getByRole('button', { name: 'Reservar' }));
 
     await screen.findByText(
