@@ -17,6 +17,9 @@ export default defineConfig({
     globals: true,
     // tests/e2e/ es de Playwright, no de Vitest — se excluye explícitamente
     // para que no intente ejecutar specs de Playwright como si fueran unitarios.
-    exclude: ['node_modules', 'tests/e2e/**'],
+    // tests/integration/ tiene su propia config (vitest.integration.config.ts,
+    // `npm run test:integration`) porque habla con un Supabase local real, no
+    // con mocks — no debe correr como parte de `npm run test` (AI/TESTING.md).
+    exclude: ['node_modules', 'tests/e2e/**', 'tests/integration/**'],
   },
 });

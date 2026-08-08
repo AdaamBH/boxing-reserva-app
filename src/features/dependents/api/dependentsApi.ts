@@ -1,5 +1,18 @@
 import { supabase } from '@/lib/supabase';
 import type { AddDependentFormValues } from '@/features/dependents/schemas';
+import type { Dependent } from '@/features/dependents/types';
+
+export async function fetchMyDependents(): Promise<Dependent[]> {
+  const { data, error } = await supabase.from('dependents').select('*').order('nombre');
+
+  if (error) {
+    throw new Error(
+      'No se han podido cargar tus dependientes. Inténtalo de nuevo en unos segundos.',
+    );
+  }
+
+  return data;
+}
 
 export async function addDependent(values: AddDependentFormValues): Promise<void> {
   const { data } = await supabase.auth.getUser();

@@ -29,6 +29,58 @@ export type Database = {
   };
   public: {
     Tables: {
+      bookings: {
+        Row: {
+          cancelled_at: string | null;
+          created_at: string;
+          dependent_id: string | null;
+          estado: string;
+          id: string;
+          session_id: string;
+          user_id: string;
+        };
+        Insert: {
+          cancelled_at?: string | null;
+          created_at?: string;
+          dependent_id?: string | null;
+          estado?: string;
+          id?: string;
+          session_id: string;
+          user_id: string;
+        };
+        Update: {
+          cancelled_at?: string | null;
+          created_at?: string;
+          dependent_id?: string | null;
+          estado?: string;
+          id?: string;
+          session_id?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'bookings_dependent_id_fkey';
+            columns: ['dependent_id'];
+            isOneToOne: false;
+            referencedRelation: 'dependents';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'bookings_session_id_fkey';
+            columns: ['session_id'];
+            isOneToOne: false;
+            referencedRelation: 'class_sessions';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'bookings_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       class_sessions: {
         Row: {
           aforo_maximo: number;
@@ -228,13 +280,80 @@ export type Database = {
         };
         Relationships: [];
       };
+      waitlist_entries: {
+        Row: {
+          created_at: string;
+          dependent_id: string | null;
+          id: string;
+          session_id: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          dependent_id?: string | null;
+          id?: string;
+          session_id: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          dependent_id?: string | null;
+          id?: string;
+          session_id?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'waitlist_entries_dependent_id_fkey';
+            columns: ['dependent_id'];
+            isOneToOne: false;
+            referencedRelation: 'dependents';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'waitlist_entries_session_id_fkey';
+            columns: ['session_id'];
+            isOneToOne: false;
+            referencedRelation: 'class_sessions';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'waitlist_entries_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
     };
     Views: {
       [_ in never]: never;
     };
     Functions: {
+      book_class_session: {
+        Args: { p_dependent_id?: string; p_session_id: string };
+        Returns: string;
+      };
+      cancel_booking: {
+        Args: { p_booking_id: string };
+        Returns: {
+          promoted: boolean;
+        }[];
+      };
       generate_class_sessions: { Args: never; Returns: undefined };
+      get_session_occupancy: {
+        Args: { p_session_ids: string[] };
+        Returns: {
+          ocupadas: number;
+          session_id: string;
+        }[];
+      };
       is_admin: { Args: never; Returns: boolean };
+      leave_waitlist: {
+        Args: { p_waitlist_entry_id: string };
+        Returns: undefined;
+      };
     };
     Enums: {
       [_ in never]: never;
