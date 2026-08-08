@@ -14,7 +14,9 @@ export function ClassTemplatesPage() {
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-4 py-8">
-      <h1 className="text-2xl font-semibold text-ink">Plantillas de clase</h1>
+      <h1 className="text-2xl font-semibold tracking-wide text-ink uppercase">
+        Plantillas de clase
+      </h1>
 
       {!isCreating && (
         <Button type="button" onClick={() => setIsCreating(true)}>

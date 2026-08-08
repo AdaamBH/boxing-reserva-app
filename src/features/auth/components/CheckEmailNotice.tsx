@@ -18,12 +18,14 @@ const COPY: Record<CheckEmailContext, { title: string; body: string }> = {
 
 // Wrapper compartido para "te hemos enviado un email" — el texto varía
 // según el contexto (COPY), pero la estructura visual y el aviso de spam
-// son iguales en los dos casos, así que no se duplica el componente.
+// son iguales en los dos casos, así que no se duplica el componente. Sin
+// tarjeta propia a propósito: siempre vive dentro de la tarjeta que ya
+// pone AuthLayout, una segunda tarjeta anidada dentro sería redundante.
 export function CheckEmailNotice({ email, context }: CheckEmailNoticeProps) {
   const { title, body } = COPY[context];
 
   return (
-    <div className="flex flex-col items-center gap-4 rounded-lg border border-line bg-canvas-raised p-6 text-center">
+    <div className="flex flex-col items-center gap-4 text-center">
       <h2 className="text-lg font-semibold text-ink">{title}</h2>
       <p className="text-base text-ink-muted">
         Hemos enviado un enlace a <strong className="text-ink">{email}</strong>. {body}

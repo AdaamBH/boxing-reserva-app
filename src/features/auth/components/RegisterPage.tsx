@@ -2,13 +2,13 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { RegisterForm } from '@/features/auth/components/RegisterForm';
 import { CheckEmailNotice } from '@/features/auth/components/CheckEmailNotice';
+import { AuthLayout } from '@/features/auth/components/AuthLayout';
 
 export function RegisterPage() {
   const [registeredEmail, setRegisteredEmail] = useState<string | null>(null);
 
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col justify-center gap-6 px-4 py-8">
-      <h1 className="text-center text-2xl font-semibold text-ink">Crear cuenta</h1>
+    <AuthLayout title="Crear cuenta">
       {registeredEmail ? (
         <CheckEmailNotice email={registeredEmail} context="registro" />
       ) : (
@@ -22,6 +22,6 @@ export function RegisterPage() {
           </Link>
         </>
       )}
-    </div>
+    </AuthLayout>
   );
 }

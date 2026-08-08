@@ -6,6 +6,7 @@ import type { AddDependentFormValues } from '@/features/dependents/schemas';
 import { useAddDependent } from '@/features/dependents/hooks/useAddDependent';
 import { Button } from '@/components/Button';
 import { TextField } from '@/components/TextField';
+import { SelectField } from '@/components/SelectField';
 
 interface AddDependentFormProps {
   onSuccess: () => void;
@@ -53,29 +54,13 @@ export function AddDependentForm({ onSuccess }: AddDependentFormProps) {
         {...register('fechaNacimiento')}
       />
 
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="relacion" className="text-sm font-medium text-ink-muted">
-          Tu relación con el/la menor
-        </label>
-        <select
-          id="relacion"
-          defaultValue=""
-          className="min-h-11 rounded-lg border border-line-strong px-3 py-2 text-base text-ink focus:outline-none focus:ring-2 focus:ring-brand-600 focus:ring-offset-1"
-          {...register('relacion')}
-        >
-          <option value="" disabled>
-            Selecciona una opción
-          </option>
-          {OPCIONES_RELACION.map((opcion) => (
-            <option key={opcion.value} value={opcion.value}>
-              {opcion.label}
-            </option>
-          ))}
-        </select>
-        {errors.relacion && (
-          <p className="text-sm text-danger-500">{errors.relacion.message}</p>
-        )}
-      </div>
+      <SelectField
+        label="Tu relación con el/la menor"
+        placeholder="Selecciona una opción"
+        options={OPCIONES_RELACION.map((opcion) => ({ ...opcion }))}
+        error={errors.relacion?.message}
+        {...register('relacion')}
+      />
 
       {/* Consentimiento explícito y visible — no un checkbox genérico de
           "acepto términos" (SECURITY.md). Nombra el dato y la finalidad
