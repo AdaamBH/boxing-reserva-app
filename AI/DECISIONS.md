@@ -209,3 +209,15 @@ Implementación: `get_session_roster(p_session_id)` (`SECURITY DEFINER`, `stable
 **Alternativas consideradas:** Adoptar la paleta que sugería `ui-ux-pro-max` por defecto para "fitness/gym app" (naranja/verde) — descartada, ver arriba. Añadir GSAP para las animaciones de scroll — descartada por ahora: el proyecto no tenía ninguna dependencia de animación, y `IntersectionObserver` + transiciones CSS cubren el nivel de movimiento pedido ("sutiles") sin peso extra.
 
 **Consecuencias:** Sin fotografía real del gimnasio ni testimonios todavía — la sección de "por qué reservar aquí" se apoya en las ventajas funcionales reales (aforo, lista de espera, cancelación, avisos), no en contenido que habría que inventar. Cuando haya fotos/reseñas reales, es un añadido incremental, no un rediseño.
+
+---
+
+## [2026-08-08] Code-splitting por ruta: `React.lazy`, no `next/dynamic`
+
+**Contexto:** Auditoría con la skill `vercel-react-best-practices`. El build llevaba toda la sesión avisando de un único bundle de ~628 kB (177 kB gzip) sin ningún `import()` dinámico — el panel de admin, la ficha de dependientes, la lista de la clase, etc. se descargaban siempre, aunque un alumno normal solo visite `/clases` y `/mis-reservas`.
+
+**Decisión:** Cada página de `router.tsx` pasa a `React.lazy(() => import(...).then(m => ({ default: m.X })))` — el `.then` hace falta porque todos los componentes de página usan exportación con nombre (`CODE_STYLE.md`), no por defecto, y `React.lazy` exige un `default`; no se ha cambiado el estilo de exportación de ningún componente para evitarlo. `AppShell` añade su propio `<Suspense>` alrededor del `<Outlet/>` (no solo uno global) para que la cabecera/nav no desaparezca al cambiar de pestaña, solo el área de contenido muestra el estado de carga. Nuevo componente compartido `PageFallback` (sustituye el bloque "Cargando…" que `ProtectedRoute`/`AdminRoute` ya repetían cada uno por su cuenta).
+
+**Alternativas consideradas:** `next/dynamic` (descartada — es la API que sugiere la skill por defecto, pero es específica de Next.js; este proyecto es Vite + React Router puro, `React.lazy` es el equivalente real). Un único `<Suspense>` global en vez de uno anidado dentro de `AppShell` (descartada — haría que la nav parpadeara/desapareciera en cada cambio de pestaña dentro de la app, peor experiencia que perderlo solo en la carga inicial).
+
+**Consecuencias:** El bundle principal baja a ~468 kB (135 kB gzip); cada página es su propio chunk de pocos KB, y `/admin/*` no se descarga nunca para un alumno que no es admin. Cualquier página nueva que se añada a `router.tsx` debe seguir el mismo patrón `lazy(...)`, no un `import` estático directo.

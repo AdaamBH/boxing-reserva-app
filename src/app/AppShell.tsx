@@ -1,7 +1,9 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { Suspense } from 'react';
 import type { ComponentType } from 'react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useSignOut } from '@/features/auth/hooks/useSignOut';
+import { PageFallback } from '@/components/PageFallback';
 import {
   CalendarIcon,
   ChecklistIcon,
@@ -78,7 +80,13 @@ export function AppShell() {
       </header>
 
       <main className="flex-1 pb-20 md:pb-8">
-        <Outlet />
+        {/* Cada página autenticada es un chunk aparte (ver router.tsx) —
+            este Suspense es lo que evita que cambiar de pestaña haga
+            desaparecer la cabecera/nav mientras se descarga, solo se ve
+            la espera en el área de contenido. */}
+        <Suspense fallback={<PageFallback minHeightClassName="min-h-[50vh]" />}>
+          <Outlet />
+        </Suspense>
       </main>
 
       <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-canvas-raised/95 backdrop-blur md:hidden">
