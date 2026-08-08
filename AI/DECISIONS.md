@@ -52,3 +52,14 @@ Formato de cada entrada:
 ---
 
 *(Siguiente entrada: la próxima decisión técnica relevante que surja durante la implementación se añade aquí, siguiendo el mismo formato.)*
+
+
+## [2026-07-23] Generación de `class_sessions`: `pg_cron` + función Postgres, no Edge Function
+
+**Contexto:** `DATABASE.md` exige una función programada que mantenga siempre las próximas 4 semanas de `class_sessions` generadas desde `class_templates` activas. Dos fuentes externas se contradecían sobre si `pg_cron` está disponible en el plan gratuito de Supabase (una lo confirmaba, otra —más reciente— decía que ahora requiere plan Pro). Se comprobó en vivo contra el proyecto cloud real (`create extension pg_cron`, seguido de `list_extensions`): confirmado disponible y activo.
+
+**Decisión:** `pg_cron` programa directamente una función `plpgsql` (`generate_class_sessions`), sin pasar por Edge Function ni `pg_net`. La generación es pura lógica de base de datos (leer una tabla, insertar en otra) — no hay ninguna llamada externa que justifique esa complejidad añadida.
+
+**Alternativas consideradas:** Edge Function invocada por `pg_cron`+`pg_net` (descartada — es el patrón correcto cuando la tarea programada necesita salir de la base de datos, como enviar un email; aquí no aporta nada, solo más piezas que mantener). Disparador externo tipo GitHub Actions/Vercel Cron llamando a una función vía API (descartada — introduce una superficie de infraestructura nueva fuera de Supabase para un problema que la propia base de datos ya resuelve con una extensión estándar).
+
+**Consecuencias:** La ejecución diaria queda registrada en `cron.job_run_details` dentro de la propia base de datos, consultable con SQL normal. Si `pg_cron` dejara de estar disponible en el plan gratuito en el futuro, este es el único punto de la aplicación que habría que migrar a un disparador externo.

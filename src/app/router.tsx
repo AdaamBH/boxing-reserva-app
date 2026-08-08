@@ -5,6 +5,8 @@ import { PasswordResetRequestPage } from '@/features/auth/components/PasswordRes
 import { UpdatePasswordPage } from '@/features/auth/components/UpdatePasswordPage';
 import { AddDependentPage } from '@/features/dependents/components/AddDependentPage';
 import { ProtectedRoute } from '@/app/ProtectedRoute';
+import { ClassSessionsPage } from '@/features/classes/components/ClassSessionsPage';
+import { TrainersPage } from '@/features/trainers/components/TrainersPage';
 
 export function AppRouter() {
   return (
@@ -14,6 +16,22 @@ export function AppRouter() {
       <Route path="/iniciar-sesion" element={<LoginPage />} />
       <Route path="/recuperar-contrasena" element={<PasswordResetRequestPage />} />
       <Route path="/restablecer-contrasena" element={<UpdatePasswordPage />} />
+      <Route
+        path="/clases"
+        element={
+          <ProtectedRoute>
+            <ClassSessionsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/entrenadores"
+        element={
+          <ProtectedRoute>
+            <TrainersPage />
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/dependientes/nuevo"
         element={
