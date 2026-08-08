@@ -1,4 +1,5 @@
 import type { ClassSessionWithTrainer } from '@/features/classes/types';
+import { formatSpanishDate, formatTime } from '@/utils/formatDate';
 
 interface ClassSessionCardProps {
   session: ClassSessionWithTrainer;
@@ -9,21 +10,6 @@ const NIVEL_LABEL: Record<string, string> = {
   intermedio: 'Intermedio',
   avanzado: 'Avanzado',
 };
-
-// "T00:00:00" sin "Z" es a propósito: fuerza a JavaScript a interpretar
-// la fecha en local, no en UTC (mismo motivo que en classesApi.ts) — así
-// se muestra el día que de verdad corresponde en España.
-function formatFecha(fecha: string): string {
-  return new Date(`${fecha}T00:00:00`).toLocaleDateString('es-ES', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-  });
-}
-
-function formatHora(hora: string): string {
-  return hora.slice(0, 5);
-}
 
 export function ClassSessionCard({ session }: ClassSessionCardProps) {
   const trainerName = session.trainer?.nombre ?? 'entrenador por asignar';
@@ -37,8 +23,8 @@ export function ClassSessionCard({ session }: ClassSessionCardProps) {
         </span>
       </div>
       <p className="text-sm text-slate-600">
-        {formatFecha(session.fecha)} · {formatHora(session.hora_inicio)}–
-        {formatHora(session.hora_fin)}
+        {formatSpanishDate(session.fecha)} · {formatTime(session.hora_inicio)}–
+        {formatTime(session.hora_fin)}
       </p>
       <p className="text-sm text-slate-600">Con {trainerName}</p>
       {/* Aforo total, no "plazas restantes" — eso depende de bookings,

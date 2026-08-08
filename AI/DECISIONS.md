@@ -63,3 +63,15 @@ Formato de cada entrada:
 **Alternativas consideradas:** Edge Function invocada por `pg_cron`+`pg_net` (descartada — es el patrón correcto cuando la tarea programada necesita salir de la base de datos, como enviar un email; aquí no aporta nada, solo más piezas que mantener). Disparador externo tipo GitHub Actions/Vercel Cron llamando a una función vía API (descartada — introduce una superficie de infraestructura nueva fuera de Supabase para un problema que la propia base de datos ya resuelve con una extensión estándar).
 
 **Consecuencias:** La ejecución diaria queda registrada en `cron.job_run_details` dentro de la propia base de datos, consultable con SQL normal. Si `pg_cron` dejara de estar disponible en el plan gratuito en el futuro, este es el único punto de la aplicación que habría que migrar a un disparador externo.
+
+---
+
+## [2026-08-08] Formularios con campos numéricos: `useForm<Input, unknown, Output>`, dos tipos por esquema Zod
+
+**Contexto:** El panel de admin (Fase 2) introduce los primeros formularios con campos numéricos/`<select>` de número (`aforoMaximo`, `diaSemana`). Usar `z.coerce.number()` en el esquema (necesario porque un `<input>`/`<select>` nativo siempre entrega un string) rompe el tipado de `useForm<FormValues>` con `exactOptionalPropertyTypes: true`: el tipo de entrada de `z.coerce.number()` es `unknown`, pero `FormValues` (la salida del esquema) espera `number` — TypeScript no acepta un único genérico que sirva para ambos lados a la vez.
+
+**Decisión:** Cada esquema con campos coaccionados exporta dos tipos, no uno: `FormInput = z.input<typeof schema>` (lo que maneja `register`/`defaultValues`, con los campos coaccionados como `unknown`) y `FormValues = z.output<typeof schema>` (lo que recibe `onSubmit`, ya con `number`). El componente usa la firma de tres genéricos de React Hook Form 7.43+: `useForm<FormInput, unknown, FormValues>({ resolver: zodResolver(schema) })`. Además, `defaultValues` solo se incluye en el objeto de configuración cuando existe (spread condicional `...(initialValues ? { defaultValues: initialValues } : {})`), porque asignar `undefined` explícitamente a una propiedad opcional no es equivalente a omitirla bajo `exactOptionalPropertyTypes`.
+
+**Alternativas consideradas:** Quitar `exactOptionalPropertyTypes` del `tsconfig.json` (descartada — está fijado como mínimo en `CODE_STYLE.md`, no es negociable por la comodidad de un formulario). Validar y convertir los números a mano fuera de Zod, sin `z.coerce` (descartada — duplica la conversión que Zod ya resuelve correctamente y abre la puerta a que un campo llegue a `onSubmit` como string sin que TypeScript lo detecte).
+
+**Consecuencias:** Cualquier formulario futuro con campos numéricos (por ejemplo, cantidades en la Fase de reservas si llegara a haberlas) sigue este mismo patrón de dos tipos por esquema — ver `ClassTemplateForm.tsx` y `OneOffClassSessionForm.tsx` como referencia.
