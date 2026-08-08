@@ -25,7 +25,9 @@ export function SessionRosterPage() {
       )}
       {session && (
         <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-semibold text-ink">{session.nombre}</h1>
+          <h1 className="text-2xl font-semibold tracking-wide text-ink uppercase">
+            {session.nombre}
+          </h1>
           <p className="text-sm text-ink-muted">
             {formatSpanishDate(session.fecha)} · {formatTime(session.hora_inicio)}–
             {formatTime(session.hora_fin)}

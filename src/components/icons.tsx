@@ -5,6 +5,24 @@ interface IconProps {
 // Iconos de línea propios, deliberadamente simples (formas básicas, sin
 // curvas complejas) — solo los que usa la navegación de la app.
 
+export function RepeatIcon({ className }: IconProps) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M4 7h13l-3-3" />
+      <path d="M20 17H7l3 3" />
+    </svg>
+  );
+}
+
 export function CalendarIcon({ className }: IconProps) {
   return (
     <svg

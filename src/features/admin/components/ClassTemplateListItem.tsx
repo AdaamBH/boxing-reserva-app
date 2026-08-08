@@ -81,7 +81,7 @@ export function ClassTemplateListItem({
         <span
           className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${
             template.activo
-              ? 'bg-emerald-100 text-emerald-800'
+              ? 'bg-success-500/15 text-success-500'
               : 'bg-chalk text-ink-faint'
           }`}
         >
