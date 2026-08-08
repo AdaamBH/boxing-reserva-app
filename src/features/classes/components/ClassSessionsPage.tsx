@@ -9,19 +9,21 @@ export function ClassSessionsPage() {
   );
 
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-4 py-8">
-      <h1 className="text-2xl font-semibold text-slate-900">Clases disponibles</h1>
+    <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-4 py-6">
+      <h1 className="text-2xl font-semibold tracking-wide text-ink uppercase">
+        Clases disponibles
+      </h1>
 
-      {isLoading && <p className="text-sm text-slate-500">Cargando clases…</p>}
+      {isLoading && <p className="text-sm text-ink-faint">Cargando clases…</p>}
 
       {error && (
-        <p role="alert" className="text-sm text-red-600">
+        <p role="alert" className="text-sm text-danger-500">
           No se han podido cargar las clases. Inténtalo de nuevo en unos segundos.
         </p>
       )}
 
       {sessions?.length === 0 && (
-        <p className="text-sm text-slate-500">No hay clases programadas por ahora.</p>
+        <p className="text-sm text-ink-faint">No hay clases programadas por ahora.</p>
       )}
 
       {sessions && sessions.length > 0 && (
