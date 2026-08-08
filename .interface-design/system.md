@@ -49,8 +49,12 @@ Barra de pestañas fija abajo en móvil (uso real: de pie en el gimnasio), nav h
 
 - `Button` primary — `min-h-11` · `px-4 py-2.5` · `rounded-lg` · `text-base font-medium` · `bg-brand-600` · `active:scale-[0.97]` (feedback de pulsación, sin cambio de fondo en `:active`).
 - `TextField`/`SelectField` — fondo `bg-chalk` (superficie hundida, no blanco), borde `border-line-strong`, foco `ring-brand-600` (o `ring-danger-500` en error).
+- `AuthLayout` (`src/features/auth/components/AuthLayout.tsx`) — envoltorio compartido de las 4 pantallas de auth: wordmark pequeño arriba + tarjeta elevada (mismo patrón de sombra que `ClassSessionCard`) con el `h1`. Cualquier pantalla nueva de auth debe usarlo, no repetir el `min-h-dvh flex ... justify-center` a mano.
+- Encabezados de página (`h1` de nivel de sección: "Clases disponibles", "Mis reservas", "Panel de administración"...) — siempre `text-2xl font-semibold tracking-wide text-ink uppercase`. Excepción deliberada: el `h1` de `SessionRosterPage` es el nombre real de la sesión, no una etiqueta de sección, pero sigue el mismo tratamiento visual por consistencia con el resto de titulares.
+- Estados binarios tipo "activa/inactiva" (`ClassTemplateListItem`) — `bg-success-500/15 text-success-500` para el estado positivo, `bg-chalk text-ink-faint` para el neutro. No usar `emerald-*`/`green-*` de Tailwind directamente.
+- Iconos de línea (`src/components/icons.tsx`): `CalendarIcon`, `ChecklistIcon`, `PeopleIcon`, `ShieldIcon`, `LogoutIcon`, `RepeatIcon`. Añadir aquí cualquier icono nuevo, mismo estilo (`stroke="currentColor"`, `strokeWidth="1.8"`, formas simples).
 
 ## Pendiente / deliberadamente fuera de esta pasada
 
-- Panel de admin: solo recibió el barrido mecánico de tokens (colores), no una revisión de jerarquía/composición dedicada.
 - Modo oscuro: fuera de alcance del MVP (`AI/PROJECT_CONTEXT.md`) — no se ha construido ninguna variante oscura de estos tokens.
+- Code-splitting del bundle (aviso de Vite en cada build, ~620 kB) — no es un problema de diseño, pendiente si se vuelve relevante para el rendimiento en móvil.
