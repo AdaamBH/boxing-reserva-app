@@ -171,3 +171,17 @@ Formato de cada entrada:
 **Alternativas consideradas:** Montar un import map o publicar un paquete interno compartido entre el proyecto Vite y las Edge Functions Deno (descartada — infraestructura desproporcionada para 5 líneas sin lógica real, YAGNI).
 
 **Consecuencias:** Si `formatSpanishDate`/`formatTime` cambiaran de comportamiento en el frontend, alguien tiene que acordarse de replicar el cambio en `supabase/functions/_shared/formatDate.ts` a mano — riesgo pequeño y explícitamente aceptado dado lo trivial de la función.
+
+---
+
+## [2026-08-08] Lista de clase (roster): visible para cualquier alumno, "Nombre I." para todos sin distinción
+
+**Contexto:** Petición del cliente: al mirar una clase, poder ver quién está dentro (confirmados) y quién está en lista de espera, cada lista ordenada de quien reservó antes a quien reservó después. Esto no estaba en ningún documento de `AI/` y tiene una implicación de privacidad real: por defecto expondría nombres de otras personas (y de menores, vía `dependents`) a cualquier alumno logueado — con menores de por medio, `SECURITY.md`/RGPD obligan a no asumirlo sin más.
+
+**Decisión (confirmada explícitamente con el cliente, dos preguntas seguidas):** visible para **cualquier alumno autenticado** (no solo admin), mostrando **"Nombre + inicial del apellido"** (p. ej. "Lucas P.") — **el mismo formato para todos, adultos y menores, sin distinción**. Nunca el apellido completo, nunca otro dato de la reserva (ni email, ni quién es el padre/madre, ni el `user_id`).
+
+Implementación: `get_session_roster(p_session_id)` (`SECURITY DEFINER`, `stable`, migración `20260808130000`) es la única vía de lectura — las políticas de RLS de `bookings`/`waitlist_entries` **no se tocan** (siguen restringidas a "mis propias reservas"), evitando el riesgo de que ampliar RLS para este caso concreto termine filtrando más de lo previsto en otra parte de la app. La función solo proyecta `estado`, `display_name` (ya truncado dentro de la propia consulta SQL, nunca en el cliente) y `orden` (`row_number()` por `created_at`). En el frontend, `SessionRosterList` se monta solo cuando el usuario despliega "Ver lista de la clase" en la tarjeta (no se precarga para todas las sesiones de golpe) — menos consultas y menos exposición de datos por defecto.
+
+**Alternativas consideradas:** Ampliar la política de RLS de `bookings`/`waitlist_entries` para que cualquier `authenticated` vea todas las filas de una sesión (descartada — expondría la fila completa, incluido a quién pertenece cada reserva, no solo el nombre truncado; además debilitaría la garantía "solo veo mis propias reservas" en cualquier otro sitio de la app que confíe en esa RLS). Solo admin ve la lista, y el resto de alumnos solo un recuento (como `get_session_occupancy`) (descartada tras la respuesta explícita del cliente pidiendo verlo todos los alumnos). Nombre completo para adultos y solo inicial para menores (ofrecida como opción recomendada, descartada por el cliente a favor de un único formato consistente para todos).
+
+**Consecuencias:** Cualquier alumno puede llegar a identificar a otro alumno (o al hijo/a de otro alumno) por nombre + inicial si ya sabe quién suele ir a qué clase — riesgo de privacidad menor, aceptado conscientemente por el cliente. Si en el futuro se pidiera ocultar esto de nuevo, el cambio se limita a `get_session_roster` (quién puede llamarla y qué proyecta) sin tocar el modelo de RLS de `bookings`/`waitlist_entries`.
