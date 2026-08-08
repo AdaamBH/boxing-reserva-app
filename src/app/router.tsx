@@ -5,6 +5,12 @@ import { PasswordResetRequestPage } from '@/features/auth/components/PasswordRes
 import { UpdatePasswordPage } from '@/features/auth/components/UpdatePasswordPage';
 import { AddDependentPage } from '@/features/dependents/components/AddDependentPage';
 import { ProtectedRoute } from '@/app/ProtectedRoute';
+import { AdminRoute } from '@/app/AdminRoute';
+import { ClassSessionsPage } from '@/features/classes/components/ClassSessionsPage';
+import { TrainersPage } from '@/features/trainers/components/TrainersPage';
+import { AdminHomePage } from '@/features/admin/components/AdminHomePage';
+import { ClassTemplatesPage } from '@/features/admin/components/ClassTemplatesPage';
+import { AdminClassSessionsPage } from '@/features/admin/components/AdminClassSessionsPage';
 
 export function AppRouter() {
   return (
@@ -15,11 +21,51 @@ export function AppRouter() {
       <Route path="/recuperar-contrasena" element={<PasswordResetRequestPage />} />
       <Route path="/restablecer-contrasena" element={<UpdatePasswordPage />} />
       <Route
+        path="/clases"
+        element={
+          <ProtectedRoute>
+            <ClassSessionsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/entrenadores"
+        element={
+          <ProtectedRoute>
+            <TrainersPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/dependientes/nuevo"
         element={
           <ProtectedRoute>
             <AddDependentPage />
           </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin"
+        element={
+          <AdminRoute>
+            <AdminHomePage />
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/admin/plantillas"
+        element={
+          <AdminRoute>
+            <ClassTemplatesPage />
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/admin/sesiones"
+        element={
+          <AdminRoute>
+            <AdminClassSessionsPage />
+          </AdminRoute>
         }
       />
     </Routes>

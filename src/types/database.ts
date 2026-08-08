@@ -29,6 +29,107 @@ export type Database = {
   };
   public: {
     Tables: {
+      class_sessions: {
+        Row: {
+          aforo_maximo: number;
+          created_at: string;
+          estado: string;
+          fecha: string;
+          hora_fin: string;
+          hora_inicio: string;
+          id: string;
+          nivel: string;
+          nombre: string;
+          template_id: string | null;
+          trainer_id: string;
+        };
+        Insert: {
+          aforo_maximo: number;
+          created_at?: string;
+          estado?: string;
+          fecha: string;
+          hora_fin: string;
+          hora_inicio: string;
+          id?: string;
+          nivel: string;
+          nombre: string;
+          template_id?: string | null;
+          trainer_id: string;
+        };
+        Update: {
+          aforo_maximo?: number;
+          created_at?: string;
+          estado?: string;
+          fecha?: string;
+          hora_fin?: string;
+          hora_inicio?: string;
+          id?: string;
+          nivel?: string;
+          nombre?: string;
+          template_id?: string | null;
+          trainer_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'class_sessions_template_id_fkey';
+            columns: ['template_id'];
+            isOneToOne: false;
+            referencedRelation: 'class_templates';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'class_sessions_trainer_id_fkey';
+            columns: ['trainer_id'];
+            isOneToOne: false;
+            referencedRelation: 'trainers';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      class_templates: {
+        Row: {
+          activo: boolean;
+          aforo_maximo: number;
+          dia_semana: number;
+          hora_fin: string;
+          hora_inicio: string;
+          id: string;
+          nivel: string;
+          nombre: string;
+          trainer_id: string;
+        };
+        Insert: {
+          activo?: boolean;
+          aforo_maximo: number;
+          dia_semana: number;
+          hora_fin: string;
+          hora_inicio: string;
+          id?: string;
+          nivel: string;
+          nombre: string;
+          trainer_id: string;
+        };
+        Update: {
+          activo?: boolean;
+          aforo_maximo?: number;
+          dia_semana?: number;
+          hora_fin?: string;
+          hora_inicio?: string;
+          id?: string;
+          nivel?: string;
+          nombre?: string;
+          trainer_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'class_templates_trainer_id_fkey';
+            columns: ['trainer_id'];
+            isOneToOne: false;
+            referencedRelation: 'trainers';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       dependents: {
         Row: {
           apellidos: string;
@@ -100,11 +201,39 @@ export type Database = {
         };
         Relationships: [];
       };
+      trainers: {
+        Row: {
+          activo: boolean;
+          bio: string | null;
+          especialidad: string | null;
+          foto_url: string | null;
+          id: string;
+          nombre: string;
+        };
+        Insert: {
+          activo?: boolean;
+          bio?: string | null;
+          especialidad?: string | null;
+          foto_url?: string | null;
+          id?: string;
+          nombre: string;
+        };
+        Update: {
+          activo?: boolean;
+          bio?: string | null;
+          especialidad?: string | null;
+          foto_url?: string | null;
+          id?: string;
+          nombre?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
     };
     Functions: {
+      generate_class_sessions: { Args: never; Returns: undefined };
       is_admin: { Args: never; Returns: boolean };
     };
     Enums: {

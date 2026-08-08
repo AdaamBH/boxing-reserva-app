@@ -46,7 +46,7 @@ erDiagram
     class_templates {
         uuid id PK
         text nombre
-        int dia_semana "0-6"
+        int dia_semana "`dia_semana` usa la convención de Postgres (`extract(dow from fecha)`) y de JavaScript (`Date.getDay()`), que coinciden: 0 = domingo, 6 = sábado."
         time hora_inicio
         time hora_fin
         text nivel "principiante | intermedio | avanzado"
