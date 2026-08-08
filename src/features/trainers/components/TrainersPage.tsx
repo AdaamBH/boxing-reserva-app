@@ -6,12 +6,12 @@ export function TrainersPage() {
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-4 py-8">
-      <h1 className="text-2xl font-semibold text-slate-900">Entrenadores</h1>
+      <h1 className="text-2xl font-semibold text-ink">Entrenadores</h1>
 
-      {isLoading && <p className="text-sm text-slate-500">Cargando entrenadores…</p>}
+      {isLoading && <p className="text-sm text-ink-faint">Cargando entrenadores…</p>}
 
       {error && (
-        <p role="alert" className="text-sm text-red-600">
+        <p role="alert" className="text-sm text-danger-500">
           No se han podido cargar los entrenadores. Inténtalo de nuevo en unos segundos.
         </p>
       )}

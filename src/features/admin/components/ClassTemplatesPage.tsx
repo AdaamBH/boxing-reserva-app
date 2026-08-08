@@ -14,7 +14,7 @@ export function ClassTemplatesPage() {
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-4 py-8">
-      <h1 className="text-2xl font-semibold text-slate-900">Plantillas de clase</h1>
+      <h1 className="text-2xl font-semibold text-ink">Plantillas de clase</h1>
 
       {!isCreating && (
         <Button type="button" onClick={() => setIsCreating(true)}>
@@ -23,7 +23,7 @@ export function ClassTemplatesPage() {
       )}
 
       {isCreating && (
-        <div className="rounded-lg border border-slate-200 bg-white p-4">
+        <div className="rounded-lg border border-line bg-canvas-raised p-4">
           <ClassTemplateForm
             trainers={trainers ?? []}
             submitLabel="Crear plantilla"
@@ -43,16 +43,16 @@ export function ClassTemplatesPage() {
         </div>
       )}
 
-      {isLoading && <p className="text-sm text-slate-500">Cargando plantillas…</p>}
+      {isLoading && <p className="text-sm text-ink-faint">Cargando plantillas…</p>}
 
       {error && (
-        <p role="alert" className="text-sm text-red-600">
+        <p role="alert" className="text-sm text-danger-500">
           No se han podido cargar las plantillas. Inténtalo de nuevo en unos segundos.
         </p>
       )}
 
       {templates?.length === 0 && !isCreating && (
-        <p className="text-sm text-slate-500">Todavía no hay plantillas de clase.</p>
+        <p className="text-sm text-ink-faint">Todavía no hay plantillas de clase.</p>
       )}
 
       {templates && templates.length > 0 && (

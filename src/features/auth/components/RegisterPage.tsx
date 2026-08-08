@@ -8,7 +8,7 @@ export function RegisterPage() {
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col justify-center gap-6 px-4 py-8">
-      <h1 className="text-center text-2xl font-semibold text-slate-900">Crear cuenta</h1>
+      <h1 className="text-center text-2xl font-semibold text-ink">Crear cuenta</h1>
       {registeredEmail ? (
         <CheckEmailNotice email={registeredEmail} context="registro" />
       ) : (
@@ -16,7 +16,7 @@ export function RegisterPage() {
           <RegisterForm onSuccess={setRegisteredEmail} />
           <Link
             to="/iniciar-sesion"
-            className="text-center text-sm text-slate-600 underline-offset-2 hover:underline"
+            className="text-center text-sm text-ink-muted underline-offset-2 hover:underline"
           >
             ¿Ya tienes cuenta? Inicia sesión
           </Link>

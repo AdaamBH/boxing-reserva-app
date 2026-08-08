@@ -44,7 +44,7 @@ export function PasswordResetRequestForm({ onSuccess }: PasswordResetRequestForm
       />
 
       {submitError && (
-        <p role="alert" className="text-sm text-red-600">
+        <p role="alert" className="text-sm text-danger-500">
           {submitError}
         </p>
       )}

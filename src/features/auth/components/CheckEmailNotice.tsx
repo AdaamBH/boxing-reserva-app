@@ -23,13 +23,12 @@ export function CheckEmailNotice({ email, context }: CheckEmailNoticeProps) {
   const { title, body } = COPY[context];
 
   return (
-    <div className="flex flex-col items-center gap-4 rounded-lg border border-slate-200 bg-white p-6 text-center">
-      <h2 className="text-lg font-semibold text-slate-900">{title}</h2>
-      <p className="text-base text-slate-600">
-        Hemos enviado un enlace a <strong className="text-slate-900">{email}</strong>.{' '}
-        {body}
+    <div className="flex flex-col items-center gap-4 rounded-lg border border-line bg-canvas-raised p-6 text-center">
+      <h2 className="text-lg font-semibold text-ink">{title}</h2>
+      <p className="text-base text-ink-muted">
+        Hemos enviado un enlace a <strong className="text-ink">{email}</strong>. {body}
       </p>
-      <p className="text-sm text-slate-500">
+      <p className="text-sm text-ink-faint">
         ¿No lo encuentras? Revisa también la carpeta de spam.
       </p>
     </div>
