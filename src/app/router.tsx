@@ -1,4 +1,5 @@
-import { Navigate, Routes, Route } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
+import { LandingPage } from '@/features/marketing/components/LandingPage';
 import { RegisterPage } from '@/features/auth/components/RegisterPage';
 import { LoginPage } from '@/features/auth/components/LoginPage';
 import { PasswordResetRequestPage } from '@/features/auth/components/PasswordResetRequestPage';
@@ -18,7 +19,7 @@ import { AdminClassSessionsPage } from '@/features/admin/components/AdminClassSe
 export function AppRouter() {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/clases" replace />} />
+      <Route path="/" element={<LandingPage />} />
       <Route path="/registro" element={<RegisterPage />} />
       <Route path="/iniciar-sesion" element={<LoginPage />} />
       <Route path="/recuperar-contrasena" element={<PasswordResetRequestPage />} />
