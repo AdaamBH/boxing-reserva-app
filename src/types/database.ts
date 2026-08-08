@@ -339,6 +339,7 @@ export type Database = {
         Args: { p_booking_id: string };
         Returns: {
           promoted: boolean;
+          promoted_booking_id: string;
         }[];
       };
       generate_class_sessions: { Args: never; Returns: undefined };

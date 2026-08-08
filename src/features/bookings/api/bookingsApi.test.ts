@@ -1,10 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const rpcMock = vi.fn();
+const invokeMock = vi.fn();
 
 vi.mock('@/lib/supabase', () => ({
   supabase: {
     rpc: (...args: unknown[]) => rpcMock(...args),
+    functions: { invoke: (...args: unknown[]) => invokeMock(...args) },
   },
 }));
 
@@ -70,14 +72,51 @@ describe('bookClassSession', () => {
 describe('cancelBooking', () => {
   beforeEach(() => {
     rpcMock.mockReset();
+    invokeMock.mockReset();
+    invokeMock.mockResolvedValue({ data: null, error: null });
   });
 
-  it('devuelve promoted=true cuando la RPC promociona a alguien de la lista de espera', async () => {
-    rpcMock.mockResolvedValue({ data: [{ promoted: true }], error: null });
+  it('devuelve promoted=true y notifica a ambas Edge Functions cuando la RPC promociona a alguien', async () => {
+    rpcMock.mockResolvedValue({
+      data: [{ promoted: true, promoted_booking_id: 'booking-2' }],
+      error: null,
+    });
 
     const result = await cancelBooking({ bookingId: 'booking-1' });
 
     expect(result).toEqual({ success: true, data: { promoted: true } });
+    expect(invokeMock).toHaveBeenCalledWith('send_cancellation_email', {
+      body: { bookingId: 'booking-1' },
+    });
+    expect(invokeMock).toHaveBeenCalledWith('send_waitlist_promotion_email', {
+      body: { bookingId: 'booking-2' },
+    });
+  });
+
+  it('solo notifica la cancelación cuando nadie es promocionado', async () => {
+    rpcMock.mockResolvedValue({
+      data: [{ promoted: false, promoted_booking_id: null }],
+      error: null,
+    });
+
+    await cancelBooking({ bookingId: 'booking-1' });
+
+    expect(invokeMock).toHaveBeenCalledTimes(1);
+    expect(invokeMock).toHaveBeenCalledWith('send_cancellation_email', {
+      body: { bookingId: 'booking-1' },
+    });
+  });
+
+  it('un fallo notificando por email no impide devolver la cancelación como exitosa', async () => {
+    rpcMock.mockResolvedValue({
+      data: [{ promoted: false, promoted_booking_id: null }],
+      error: null,
+    });
+    invokeMock.mockResolvedValue({ data: null, error: { message: 'fallo de red' } });
+
+    const result = await cancelBooking({ bookingId: 'booking-1' });
+
+    expect(result).toEqual({ success: true, data: { promoted: false } });
   });
 
   it('traduce CANCELLATION_TOO_LATE a un resultado tipado', async () => {
