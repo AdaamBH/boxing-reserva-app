@@ -197,3 +197,15 @@ Implementación: `get_session_roster(p_session_id)` (`SECURITY DEFINER`, `stable
 **Alternativas consideradas:** Estilo SaaS neutro (azules, sans genérica) — ofrecido explícitamente como alternativa, descartado por el cliente a favor de una identidad con más carácter. Modo oscuro como parte de esta pasada — descartado, sigue fuera de alcance del MVP (`AI/PROJECT_CONTEXT.md`), los tokens solo definen un tema claro.
 
 **Consecuencias:** El panel de admin y algunas pantallas secundarias solo recibieron una sustitución mecánica de tokens de color (mismo layout, colores correctos), no una revisión de jerarquía/composición dedicada — pendiente como pulido futuro si se quiere el mismo nivel de cuidado que `ClassSessionCard`/`AppShell`. Cualquier componente nuevo debe tomar sus colores de estos tokens, nunca de clases `slate-*`/`rose-*`/`red-*`/`emerald-*` de Tailwind directamente (ver `.interface-design/system.md`).
+
+---
+
+## [2026-08-08] Landing page pública en "/", fuera del alcance original del proyecto
+
+**Contexto:** Ningún documento de `AI/` planificaba una landing page — el proyecto se diseñó como una herramienta de reserva para alumnos ya captados, no como un embudo de adquisición. `/` era un redirect directo a `/clases` (que a su vez rebotaba a login si no había sesión). El cliente pidió explícitamente una landing "visualmente impactante... que se entienda rápido qué ofrece... con buenos CTA", ampliando el alcance de forma consciente, no accidental.
+
+**Decisión:** Landing en `src/features/marketing/` (`LandingPage` + `LandingHeader`/`Hero`/`Features`/`HowItWorks`/`Cta`/`Footer`), montada en `/`. `LandingPage` comprueba sesión con `useAuth()`: si ya hay sesión, redirige a `/clases` sin mostrar marketing — solo la ve quien de verdad la necesita. Reutiliza el sistema de diseño ya existente (palette/tipografía/`CapacityTally`) en vez de una identidad nueva — la búsqueda inicial en la base de datos de `ui-ux-pro-max` sugería una paleta naranja/verde genérica de "fitness app", descartada explícitamente por romper la continuidad con la app real. Microinteracciones de scroll-reveal con `IntersectionObserver` nativo (`useScrollReveal`/`Reveal`), sin añadir ninguna librería de animación.
+
+**Alternativas consideradas:** Adoptar la paleta que sugería `ui-ux-pro-max` por defecto para "fitness/gym app" (naranja/verde) — descartada, ver arriba. Añadir GSAP para las animaciones de scroll — descartada por ahora: el proyecto no tenía ninguna dependencia de animación, y `IntersectionObserver` + transiciones CSS cubren el nivel de movimiento pedido ("sutiles") sin peso extra.
+
+**Consecuencias:** Sin fotografía real del gimnasio ni testimonios todavía — la sección de "por qué reservar aquí" se apoya en las ventajas funcionales reales (aforo, lista de espera, cancelación, avisos), no en contenido que habría que inventar. Cuando haya fotos/reseñas reales, es un añadido incremental, no un rediseño.

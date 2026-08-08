@@ -52,9 +52,15 @@ Barra de pestañas fija abajo en móvil (uso real: de pie en el gimnasio), nav h
 - `AuthLayout` (`src/features/auth/components/AuthLayout.tsx`) — envoltorio compartido de las 4 pantallas de auth: wordmark pequeño arriba + tarjeta elevada (mismo patrón de sombra que `ClassSessionCard`) con el `h1`. Cualquier pantalla nueva de auth debe usarlo, no repetir el `min-h-dvh flex ... justify-center` a mano.
 - Encabezados de página (`h1` de nivel de sección: "Clases disponibles", "Mis reservas", "Panel de administración"...) — siempre `text-2xl font-semibold tracking-wide text-ink uppercase`. Excepción deliberada: el `h1` de `SessionRosterPage` es el nombre real de la sesión, no una etiqueta de sección, pero sigue el mismo tratamiento visual por consistencia con el resto de titulares.
 - Estados binarios tipo "activa/inactiva" (`ClassTemplateListItem`) — `bg-success-500/15 text-success-500` para el estado positivo, `bg-chalk text-ink-faint` para el neutro. No usar `emerald-*`/`green-*` de Tailwind directamente.
-- Iconos de línea (`src/components/icons.tsx`): `CalendarIcon`, `ChecklistIcon`, `PeopleIcon`, `ShieldIcon`, `LogoutIcon`, `RepeatIcon`. Añadir aquí cualquier icono nuevo, mismo estilo (`stroke="currentColor"`, `strokeWidth="1.8"`, formas simples).
+- Iconos de línea (`src/components/icons.tsx`): `CalendarIcon`, `ChecklistIcon`, `PeopleIcon`, `ShieldIcon`, `LogoutIcon`, `RepeatIcon`, `BarsIcon`, `EnvelopeIcon`. Añadir aquí cualquier icono nuevo, mismo estilo (`stroke="currentColor"`, `strokeWidth="1.8"`, formas simples).
+- `Reveal` (`src/components/Reveal.tsx`, sobre `src/hooks/useScrollReveal.ts`) — fade + 12px de desplazamiento (`translate-y-3` → `translate-y-0`) al entrar en el viewport, 500ms `ease-out`, con `delayMs` para escalonar varios elementos. Respeta `prefers-reduced-motion` y entornos sin `IntersectionObserver` (muestra el contenido directo, sin animar). Solo `transform`/`opacity`. Único uso hasta ahora: `LandingPage`.
+
+## Landing page (`src/features/marketing/`)
+
+Primera pieza pública de la app — antes `/` era un redirect directo a `/clases`, no existía ninguna landing (ver `AI/DECISIONS.md`). `LandingPage` comprueba sesión: autenticado → redirige a `/clases` sin mostrar marketing; sin sesión → `LandingHeader` + `LandingHero` + `LandingFeatures` + `LandingHowItWorks` + `LandingCta` + `LandingFooter`. Reutiliza `CapacityTally` con datos de ejemplo marcados como tales en el hero — la firma visual de la app demostrando su propia ventaja (aforo real), no una promesa de marketing sin más.
 
 ## Pendiente / deliberadamente fuera de esta pasada
 
 - Modo oscuro: fuera de alcance del MVP (`AI/PROJECT_CONTEXT.md`) — no se ha construido ninguna variante oscura de estos tokens.
+- Landing: sin fotografía real del gimnasio ni testimonios (no fabricados a propósito) — añadir cuando exista contenido real.
 - Code-splitting del bundle (aviso de Vite en cada build, ~620 kB) — no es un problema de diseño, pendiente si se vuelve relevante para el rendimiento en móvil.

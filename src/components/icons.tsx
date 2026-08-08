@@ -5,6 +5,43 @@ interface IconProps {
 // Iconos de línea propios, deliberadamente simples (formas básicas, sin
 // curvas complejas) — solo los que usa la navegación de la app.
 
+export function BarsIcon({ className }: IconProps) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <line x1="5" y1="19" x2="5" y2="13" />
+      <line x1="12" y1="19" x2="12" y2="8" />
+      <line x1="19" y1="19" x2="19" y2="15" />
+    </svg>
+  );
+}
+
+export function EnvelopeIcon({ className }: IconProps) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <rect x="3.5" y="5.5" width="17" height="13" rx="2" />
+      <path d="M4 7l8 6 8-6" />
+    </svg>
+  );
+}
+
 export function RepeatIcon({ className }: IconProps) {
   return (
     <svg
