@@ -31,13 +31,13 @@ export function ClassSessionAdminRow({ session }: ClassSessionAdminRowProps) {
   }
 
   return (
-    <div className="flex flex-col gap-2 rounded-lg border border-slate-200 bg-white p-4">
-      <h3 className="text-base font-semibold text-slate-900">{session.nombre}</h3>
-      <p className="text-sm text-slate-600">
+    <div className="flex flex-col gap-2 rounded-lg border border-line bg-canvas-raised p-4">
+      <h3 className="text-base font-semibold text-ink">{session.nombre}</h3>
+      <p className="text-sm text-ink-muted">
         {formatSpanishDate(session.fecha)} · {formatTime(session.hora_inicio)}–
         {formatTime(session.hora_fin)}
       </p>
-      <p className="text-sm text-slate-600">
+      <p className="text-sm text-ink-muted">
         {NIVEL_LABEL[session.nivel] ?? session.nivel} · Con {trainerName}
       </p>
       <Button

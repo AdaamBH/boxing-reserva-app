@@ -8,17 +8,14 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children: ReactNode;
 }
 
-// Rojo profundo y apagado (no el rojo vivo de los mensajes de error) —
-// elección deliberada, no azul genérico de plantilla: evoca guante/lona de
-// boxeo. Al ser un tono claramente distinto (más oscuro) del rojo de
-// validación de TextField, un botón primario y un error nunca se confunden
-// visualmente aunque compartan familia de color. Cuando exista marca real
-// del gimnasio, este es el único sitio que hay que tocar.
+// Cuero oxblood (`brand`, ver src/styles/index.css) — evoca guante/lona de
+// boxeo, deliberadamente distinto del rojo de validación (`danger`, ver
+// TextField.tsx) para que un botón primario y un error nunca se confundan
+// visualmente aunque compartan familia de color.
 const VARIANT_STYLES: Record<ButtonVariant, string> = {
-  primary:
-    'bg-rose-800 text-white hover:bg-rose-900 active:bg-rose-950 disabled:bg-rose-800/40',
+  primary: 'bg-brand-600 text-white hover:bg-brand-700 disabled:bg-brand-600/40',
   secondary:
-    'border border-slate-300 bg-white text-slate-900 hover:bg-slate-50 active:bg-slate-100 disabled:border-slate-200 disabled:text-slate-400',
+    'border border-line-strong bg-canvas-raised text-ink hover:bg-chalk disabled:border-line disabled:text-ink-faint',
 };
 
 export function Button({
@@ -33,7 +30,7 @@ export function Button({
     <button
       disabled={disabled || isLoading}
       aria-busy={isLoading}
-      className={`inline-flex min-h-11 w-full items-center justify-center rounded-lg px-4 py-2.5 text-base font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-rose-800 focus:ring-offset-2 disabled:cursor-not-allowed ${VARIANT_STYLES[variant]} ${className ?? ''}`}
+      className={`inline-flex min-h-11 w-full items-center justify-center rounded-lg px-4 py-2.5 text-base font-medium transition-all duration-150 ease-out focus:ring-2 focus:ring-brand-600 focus:ring-offset-2 focus:ring-offset-canvas focus:outline-none active:scale-[0.97] disabled:cursor-not-allowed disabled:active:scale-100 ${VARIANT_STYLES[variant]} ${className ?? ''}`}
       {...rest}
     >
       {isLoading ? 'Cargando…' : children}

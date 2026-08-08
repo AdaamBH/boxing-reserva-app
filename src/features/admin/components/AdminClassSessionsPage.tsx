@@ -14,7 +14,7 @@ export function AdminClassSessionsPage() {
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-4 py-8">
-      <h1 className="text-2xl font-semibold text-slate-900">Sesiones de clase</h1>
+      <h1 className="text-2xl font-semibold text-ink">Sesiones de clase</h1>
 
       {!isCreating && (
         <Button type="button" onClick={() => setIsCreating(true)}>
@@ -23,7 +23,7 @@ export function AdminClassSessionsPage() {
       )}
 
       {isCreating && (
-        <div className="rounded-lg border border-slate-200 bg-white p-4">
+        <div className="rounded-lg border border-line bg-canvas-raised p-4">
           <OneOffClassSessionForm
             trainers={trainers ?? []}
             onSubmit={async (values) => {
@@ -42,16 +42,16 @@ export function AdminClassSessionsPage() {
         </div>
       )}
 
-      {isLoading && <p className="text-sm text-slate-500">Cargando sesiones…</p>}
+      {isLoading && <p className="text-sm text-ink-faint">Cargando sesiones…</p>}
 
       {error && (
-        <p role="alert" className="text-sm text-red-600">
+        <p role="alert" className="text-sm text-danger-500">
           No se han podido cargar las sesiones. Inténtalo de nuevo en unos segundos.
         </p>
       )}
 
       {sessions?.length === 0 && !isCreating && (
-        <p className="text-sm text-slate-500">No hay sesiones programadas por ahora.</p>
+        <p className="text-sm text-ink-faint">No hay sesiones programadas por ahora.</p>
       )}
 
       {sessions && sessions.length > 0 && (

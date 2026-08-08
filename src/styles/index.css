@@ -9,7 +9,13 @@
 /* Design tokens del proyecto. Un único sitio para los colores de marca:
    cuando tengas el nombre/logo definitivo del gimnasio (ver PROJECT_CONTEXT.md),
    estos son los únicos valores que hay que tocar — ningún componente debería
-   tener un color "mágico" fuera de aquí (ver CODE_STYLE.md). */
+   tener un color "mágico" fuera de aquí (ver CODE_STYLE.md).
+
+   Dirección visual (ver AI/DECISIONS.md): el mundo de un gimnasio de boxeo
+   real, no una plantilla SaaS genérica — lona/canvas cálido, cuero oxblood,
+   cuerda de rin, tiza. `brand-*` (cuero oxblood) ya existía; el resto es
+   nuevo. Un único acento (`brand`), el resto son neutros cálidos con un
+   ligero sesgo de matiz hacia el acento (no gris puro). */
 @theme {
   --color-brand-50: oklch(0.97 0.02 25);
   --color-brand-100: oklch(0.93 0.05 25);
@@ -22,8 +28,37 @@
   --color-success-500: oklch(0.6 0.15 145);
   --color-warning-500: oklch(0.75 0.15 80);
   --color-danger-500: oklch(0.55 0.2 25);
+
+  /* Superficies y texto — sustituyen a los slate y white genéricos en
+     toda la app. Un único matiz cálido (~65-80 grados, el mismo eje que
+     `brand`), desplazando solo la luminosidad entre pasos — no grises
+     fríos desconectados del acento. */
+  --color-canvas: oklch(0.975 0.012 80); /* fondo de página: lona/crema */
+  --color-canvas-raised: oklch(0.95 0.014 78); /* tarjetas: un paso por encima */
+  --color-chalk: oklch(0.91 0.014 75); /* superficie hundida: inputs, tiza */
+  --color-ink: oklch(0.24 0.018 55); /* texto principal, negro cálido */
+  --color-ink-muted: oklch(0.46 0.016 55); /* texto secundario */
+  --color-ink-faint: oklch(0.63 0.013 55); /* texto terciario / meta */
+  --color-line: oklch(0.87 0.016 70); /* bordes por defecto, casi invisibles */
+  --color-line-strong: oklch(0.78 0.02 65); /* bordes con más presencia */
+  --color-rope: oklch(0.64 0.075 75); /* acento secundario: cuerda de rin */
+  --color-rope-soft: oklch(0.9 0.035 78); /* fondo suave para "en espera" */
+
+  /* Oswald (condensada, cartel de combate) para títulos y cifras;
+     Work Sans (cálida, legible) para el cuerpo — sustituye la sans por
+     defecto de Tailwind en toda la app. */
+  --font-sans: 'Work Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-display: 'Oswald', 'Arial Narrow', sans-serif;
 }
 
 body {
-  @apply bg-white text-slate-900 antialiased;
+  @apply bg-canvas font-sans text-ink antialiased;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  @apply font-display;
+  text-wrap: balance;
 }

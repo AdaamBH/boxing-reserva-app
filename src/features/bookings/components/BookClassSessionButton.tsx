@@ -80,7 +80,7 @@ export function BookClassSessionButton({
       {feedback && (
         <p
           role="alert"
-          className={`text-sm ${feedback.isError ? 'text-red-600' : 'text-emerald-700'}`}
+          className={`text-sm font-medium ${feedback.isError ? 'text-danger-500' : 'text-success-500'}`}
         >
           {feedback.text}
         </p>

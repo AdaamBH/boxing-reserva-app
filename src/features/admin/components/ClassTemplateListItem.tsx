@@ -48,7 +48,7 @@ export function ClassTemplateListItem({
     };
 
     return (
-      <div className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-4">
+      <div className="flex flex-col gap-3 rounded-lg border border-line bg-canvas-raised p-4">
         <ClassTemplateForm
           trainers={trainers}
           initialValues={initialValues}
@@ -75,28 +75,28 @@ export function ClassTemplateListItem({
   )?.nombre;
 
   return (
-    <div className="flex flex-col gap-2 rounded-lg border border-slate-200 bg-white p-4">
+    <div className="flex flex-col gap-2 rounded-lg border border-line bg-canvas-raised p-4">
       <div className="flex items-start justify-between gap-2">
-        <h3 className="text-base font-semibold text-slate-900">{template.nombre}</h3>
+        <h3 className="text-base font-semibold text-ink">{template.nombre}</h3>
         <span
           className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${
             template.activo
               ? 'bg-emerald-100 text-emerald-800'
-              : 'bg-slate-100 text-slate-500'
+              : 'bg-chalk text-ink-faint'
           }`}
         >
           {template.activo ? 'Activa' : 'Inactiva'}
         </span>
       </div>
-      <p className="text-sm text-slate-600">
+      <p className="text-sm text-ink-muted">
         {DIA_LABEL[template.dia_semana]} · {formatTime(template.hora_inicio)}–
         {formatTime(template.hora_fin)}
       </p>
-      <p className="text-sm text-slate-600">
+      <p className="text-sm text-ink-muted">
         {NIVEL_LABEL[template.nivel] ?? template.nivel} · Con{' '}
         {trainerName ?? 'entrenador por asignar'}
       </p>
-      <p className="text-sm text-slate-500">Aforo: {template.aforo_maximo} plazas</p>
+      <p className="text-sm text-ink-faint">Aforo: {template.aforo_maximo} plazas</p>
       <div className="flex gap-2">
         <Button
           type="button"

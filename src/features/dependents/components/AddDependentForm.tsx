@@ -54,13 +54,13 @@ export function AddDependentForm({ onSuccess }: AddDependentFormProps) {
       />
 
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="relacion" className="text-sm font-medium text-slate-700">
+        <label htmlFor="relacion" className="text-sm font-medium text-ink-muted">
           Tu relación con el/la menor
         </label>
         <select
           id="relacion"
           defaultValue=""
-          className="min-h-11 rounded-lg border border-slate-300 px-3 py-2 text-base text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-800 focus:ring-offset-1"
+          className="min-h-11 rounded-lg border border-line-strong px-3 py-2 text-base text-ink focus:outline-none focus:ring-2 focus:ring-brand-600 focus:ring-offset-1"
           {...register('relacion')}
         >
           <option value="" disabled>
@@ -73,17 +73,17 @@ export function AddDependentForm({ onSuccess }: AddDependentFormProps) {
           ))}
         </select>
         {errors.relacion && (
-          <p className="text-sm text-red-600">{errors.relacion.message}</p>
+          <p className="text-sm text-danger-500">{errors.relacion.message}</p>
         )}
       </div>
 
       {/* Consentimiento explícito y visible — no un checkbox genérico de
           "acepto términos" (SECURITY.md). Nombra el dato y la finalidad
           concretos. */}
-      <label className="flex items-start gap-2 text-sm text-slate-700">
+      <label className="flex items-start gap-2 text-sm text-ink-muted">
         <input
           type="checkbox"
-          className="mt-0.5 h-4 w-4 rounded border-slate-300"
+          className="mt-0.5 h-4 w-4 rounded border-line-strong"
           {...register('consentimiento')}
         />
         <span>
@@ -93,11 +93,11 @@ export function AddDependentForm({ onSuccess }: AddDependentFormProps) {
         </span>
       </label>
       {errors.consentimiento && (
-        <p className="text-sm text-red-600">{errors.consentimiento.message}</p>
+        <p className="text-sm text-danger-500">{errors.consentimiento.message}</p>
       )}
 
       {submitError && (
-        <p role="alert" className="text-sm text-red-600">
+        <p role="alert" className="text-sm text-danger-500">
           {submitError}
         </p>
       )}
