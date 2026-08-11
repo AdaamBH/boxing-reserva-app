@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { MemoryRouter } from 'react-router-dom';
 import type { ComponentProps } from 'react';
 import { render, screen } from '@/test-utils';
 import userEvent from '@testing-library/user-event';
 import { BookClassSessionButton } from './BookClassSessionButton';
 import { bookClassSession } from '@/features/bookings/api/bookingsApi';
 import { fetchMyDependents } from '@/features/dependents/api/dependentsApi';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 
 vi.mock('@/features/bookings/api/bookingsApi', () => ({
   bookClassSession: vi.fn(),
@@ -13,16 +13,18 @@ vi.mock('@/features/bookings/api/bookingsApi', () => ({
 vi.mock('@/features/dependents/api/dependentsApi', () => ({
   fetchMyDependents: vi.fn(),
 }));
+vi.mock('@/features/auth/hooks/useAuth', () => ({
+  useAuth: vi.fn(),
+}));
 
-// BookClassSessionButton renderiza un <Link> (enlace a "Añadir
-// dependiente"), que necesita un Router alrededor para no lanzar —
-// MemoryRouter en cada render, igual que en ClassSessionCard.test.tsx.
+function mockAuth(defaultDependentId: string | null) {
+  vi.mocked(useAuth).mockReturnValue({
+    profile: { default_dependent_id: defaultDependentId },
+  } as ReturnType<typeof useAuth>);
+}
+
 function renderButton(props: ComponentProps<typeof BookClassSessionButton>) {
-  return render(
-    <MemoryRouter>
-      <BookClassSessionButton {...props} />
-    </MemoryRouter>,
-  );
+  return render(<BookClassSessionButton {...props} />);
 }
 
 describe('BookClassSessionButton', () => {
@@ -30,15 +32,14 @@ describe('BookClassSessionButton', () => {
     vi.mocked(bookClassSession).mockReset();
     vi.mocked(fetchMyDependents).mockReset();
     vi.mocked(fetchMyDependents).mockResolvedValue([]);
+    mockAuth(null);
   });
 
-  it('reserva para uno mismo cuando no hay dependientes (no muestra selector)', async () => {
+  it('reserva para uno mismo cuando no hay dependiente por defecto', async () => {
     vi.mocked(bookClassSession).mockResolvedValue({ success: true, data: 'confirmada' });
     const user = userEvent.setup();
 
     renderButton({ sessionId: 'session-1' });
-    expect(screen.queryByLabelText('¿Para quién es la reserva?')).not.toBeInTheDocument();
-
     await user.click(screen.getByRole('button', { name: 'Reservar' }));
 
     await screen.findByText('Reserva confirmada.');
@@ -48,7 +49,7 @@ describe('BookClassSessionButton', () => {
     });
   });
 
-  it('muestra el selector y reserva para el dependiente elegido', async () => {
+  it('reserva automáticamente para el dependiente guardado como preferido', async () => {
     vi.mocked(fetchMyDependents).mockResolvedValue([
       {
         id: 'dep-1',
@@ -61,14 +62,13 @@ describe('BookClassSessionButton', () => {
         consent_given_at: '2026-01-01T00:00:00.000Z',
       },
     ]);
+    mockAuth('dep-1');
     vi.mocked(bookClassSession).mockResolvedValue({ success: true, data: 'en_espera' });
     const user = userEvent.setup();
 
     renderButton({ sessionId: 'session-1' });
-    await user.selectOptions(
-      await screen.findByLabelText('¿Para quién es la reserva?'),
-      'dep-1',
-    );
+    await screen.findByText('Para Lucía');
+
     await user.click(screen.getByRole('button', { name: 'Reservar' }));
 
     await screen.findByText('Clase llena: te hemos apuntado en la lista de espera.');

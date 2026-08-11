@@ -8,13 +8,17 @@ interface Feature {
   icon: ComponentType<{ className?: string }>;
 }
 
-const FEATURES: Feature[] = [
-  {
-    title: 'Aforo real, sin sorpresas',
-    description:
-      'Ves exactamente cuántas plazas quedan en cada clase — nunca hay overbooking, nunca te quedas fuera sin saberlo.',
-    icon: BarsIcon,
-  },
+// La primera es el diferenciador real del proyecto (aforo controlado sin
+// condiciones de carrera, ver AI/DATABASE.md) — recibe tratamiento propio
+// más grande en vez de competir en igualdad con las otras tres.
+const HERO_FEATURE: Feature = {
+  title: 'Aforo real, sin sorpresas',
+  description:
+    'Ves exactamente cuántas plazas quedan en cada clase — nunca hay overbooking, nunca te quedas fuera sin saberlo.',
+  icon: BarsIcon,
+};
+
+const SUPPORTING_FEATURES: Feature[] = [
   {
     title: 'Lista de espera automática',
     description:
@@ -43,9 +47,24 @@ export function LandingFeatures() {
           Por qué reservar aquí
         </h2>
       </Reveal>
-      <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2">
-        {FEATURES.map((feature, index) => (
-          <Reveal key={feature.title} delayMs={index * 80}>
+
+      <Reveal delayMs={60} className="mt-10">
+        <div className="flex flex-col items-center gap-4 rounded-xl border border-line bg-canvas-raised p-6 text-center sm:flex-row sm:items-center sm:gap-6 sm:p-8 sm:text-left">
+          <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-brand-600/10 text-brand-600">
+            <HERO_FEATURE.icon className="h-7 w-7" />
+          </span>
+          <div className="flex flex-col gap-1.5">
+            <h3 className="text-lg font-semibold text-ink">{HERO_FEATURE.title}</h3>
+            <p className="text-sm text-ink-muted sm:text-base">
+              {HERO_FEATURE.description}
+            </p>
+          </div>
+        </div>
+      </Reveal>
+
+      <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
+        {SUPPORTING_FEATURES.map((feature, index) => (
+          <Reveal key={feature.title} delayMs={120 + index * 80}>
             <div className="flex h-full flex-col gap-3 rounded-xl border border-line bg-canvas-raised p-5">
               <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-brand-600/10 text-brand-600">
                 <feature.icon className="h-5 w-5" />

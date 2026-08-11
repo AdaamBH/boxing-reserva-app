@@ -1,14 +1,13 @@
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { NavLink, Outlet } from 'react-router-dom';
 import { Suspense } from 'react';
 import type { ComponentType } from 'react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { useSignOut } from '@/features/auth/hooks/useSignOut';
 import { PageFallback } from '@/components/PageFallback';
 import {
   CalendarIcon,
   ChecklistIcon,
-  LogoutIcon,
   PeopleIcon,
+  SettingsIcon,
   ShieldIcon,
 } from '@/components/icons';
 
@@ -18,11 +17,22 @@ interface NavItem {
   icon: ComponentType<{ className?: string }>;
 }
 
-const BASE_NAV_ITEMS: NavItem[] = [
-  { to: '/clases', label: 'Clases', icon: CalendarIcon },
-  { to: '/mis-reservas', label: 'Mis reservas', icon: ChecklistIcon },
-  { to: '/entrenadores', label: 'Entrenadores', icon: PeopleIcon },
-];
+const RESERVAS_ITEM: NavItem = { to: '/clases', label: 'Reservas', icon: CalendarIcon };
+const MIS_RESERVAS_ITEM: NavItem = {
+  to: '/mis-reservas',
+  label: 'Mis reservas',
+  icon: ChecklistIcon,
+};
+const AJUSTES_ITEM: NavItem = { to: '/ajustes', label: 'Ajustes', icon: SettingsIcon };
+// Los entrenadores de una clase ya se ven en su propia tarjeta (ver
+// ClassSessionCard) — un alumno no necesita un listado aparte. El admin sí
+// lo conserva por si lo necesita para gestión.
+const ENTRENADORES_ITEM: NavItem = {
+  to: '/entrenadores',
+  label: 'Entrenadores',
+  icon: PeopleIcon,
+};
+const ADMIN_ITEM: NavItem = { to: '/admin', label: 'Admin', icon: ShieldIcon };
 
 // Layout de las páginas autenticadas: cabecera con nav en escritorio +
 // barra de pestañas fija abajo en móvil (uso real: de pie en el gimnasio o
@@ -30,18 +40,10 @@ const BASE_NAV_ITEMS: NavItem[] = [
 // por ProtectedRoute — ver router.tsx.
 export function AppShell() {
   const { isAdmin } = useAuth();
-  const { mutate: doSignOut, isPending } = useSignOut();
-  const navigate = useNavigate();
 
   const items = isAdmin
-    ? [...BASE_NAV_ITEMS, { to: '/admin', label: 'Admin', icon: ShieldIcon }]
-    : BASE_NAV_ITEMS;
-
-  function handleSignOut() {
-    doSignOut(undefined, {
-      onSuccess: () => navigate('/iniciar-sesion', { replace: true }),
-    });
-  }
+    ? [RESERVAS_ITEM, MIS_RESERVAS_ITEM, ENTRENADORES_ITEM, AJUSTES_ITEM, ADMIN_ITEM]
+    : [RESERVAS_ITEM, MIS_RESERVAS_ITEM, AJUSTES_ITEM];
 
   return (
     <div className="flex min-h-dvh flex-col">
@@ -67,16 +69,6 @@ export function AppShell() {
             </NavLink>
           ))}
         </nav>
-
-        <button
-          type="button"
-          onClick={handleSignOut}
-          disabled={isPending}
-          aria-label="Cerrar sesión"
-          className="flex h-10 w-10 items-center justify-center rounded-lg text-ink-muted transition-colors hover:bg-chalk hover:text-ink disabled:opacity-50"
-        >
-          <LogoutIcon className="h-5 w-5" />
-        </button>
       </header>
 
       <main className="flex-1 pb-20 md:pb-8">

@@ -38,9 +38,9 @@ const AddDependentPage = lazy(() =>
     default: m.AddDependentPage,
   })),
 );
-const ClassSessionsPage = lazy(() =>
-  import('@/features/classes/components/ClassSessionsPage').then((m) => ({
-    default: m.ClassSessionsPage,
+const ReservasPage = lazy(() =>
+  import('@/features/classes/components/ReservasPage').then((m) => ({
+    default: m.ReservasPage,
   })),
 );
 const MyBookingsPage = lazy(() =>
@@ -56,6 +56,11 @@ const SessionRosterPage = lazy(() =>
 const TrainersPage = lazy(() =>
   import('@/features/trainers/components/TrainersPage').then((m) => ({
     default: m.TrainersPage,
+  })),
+);
+const AjustesPage = lazy(() =>
+  import('@/features/settings/components/AjustesPage').then((m) => ({
+    default: m.AjustesPage,
   })),
 );
 const AdminHomePage = lazy(() =>
@@ -96,11 +101,12 @@ export function AppRouter() {
             </ProtectedRoute>
           }
         >
-          <Route path="/clases" element={<ClassSessionsPage />} />
+          <Route path="/clases" element={<ReservasPage />} />
           <Route path="/clases/:sessionId/lista" element={<SessionRosterPage />} />
           <Route path="/mis-reservas" element={<MyBookingsPage />} />
           <Route path="/entrenadores" element={<TrainersPage />} />
           <Route path="/dependientes/nuevo" element={<AddDependentPage />} />
+          <Route path="/ajustes" element={<AjustesPage />} />
           <Route
             path="/admin"
             element={

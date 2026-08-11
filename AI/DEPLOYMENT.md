@@ -51,6 +51,10 @@ El esquema de la base de datos vive versionado como código, en `supabase/migrat
 - [ ] Volcado de backup manual probado al menos una vez (saber que funciona antes de necesitarlo de verdad).
 - [ ] Prueba manual completa del flujo crítico: registro → verificación → reserva → cancelación → promoción de lista de espera, en un móvil real.
 
+## Enrutado del lado del cliente (`vercel.json`)
+
+React Router hace todo el enrutado en el navegador (`pushState`), pero Vercel sirve el build de Vite como archivos estáticos: sin una regla explícita, una petición **directa** al servidor por una ruta que no es un archivo real (`/clases`, `/mis-reservas`...) devuelve 404 en vez de `index.html`. Esto pasa siempre que el navegador golpea la red en vez de resolver la ruta con el JS ya cargado — recargar la página, escribir la URL a mano, o (en móvil) el sistema operativo descartando la pestaña en segundo plano y recargándola al volver atrás. `vercel.json` en la raíz del repo redirige cualquier ruta a `index.html` para que React Router la resuelva del lado del cliente. Ver `AI/DECISIONS.md` (2026-08-11) para el diagnóstico completo.
+
 ## Despliegue continuo
 
 - Cada Pull Request genera automáticamente una URL de preview en Vercel — se prueba ahí antes de fusionar a `main`.

@@ -13,8 +13,8 @@ export function SessionRosterPage() {
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-4 py-6">
-      <Link to="/clases" className="text-sm font-medium text-brand-600 hover:underline">
-        ← Volver a clases
+      <Link to="/reservas" className="text-sm font-medium text-brand-600 hover:underline">
+        ← Volver a reservas
       </Link>
 
       {isLoading && <p className="text-sm text-ink-faint">Cargando…</p>}

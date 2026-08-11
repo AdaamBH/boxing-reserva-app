@@ -30,9 +30,9 @@ const SESSION: ClassSessionWithTrainer = {
 
 function renderPage() {
   return render(
-    <MemoryRouter initialEntries={['/clases/session-1/lista']}>
+    <MemoryRouter initialEntries={['/reservas/session-1/lista']}>
       <Routes>
-        <Route path="/clases/:sessionId/lista" element={<SessionRosterPage />} />
+        <Route path="/reservas/:sessionId/lista" element={<SessionRosterPage />} />
       </Routes>
     </MemoryRouter>,
   );

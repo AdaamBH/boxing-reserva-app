@@ -23,8 +23,12 @@ vi.mock('@/features/dependents/api/dependentsApi', () => ({
 vi.mock('@/features/bookings/api/bookingsApi', () => ({
   bookClassSession: vi.fn(),
 }));
+vi.mock('@/features/auth/hooks/useAuth', () => ({
+  useAuth: vi.fn(),
+}));
 
 import { fetchMyDependents } from '@/features/dependents/api/dependentsApi';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 
 const BASE_SESSION: ClassSessionWithTrainer = {
   id: '1',
@@ -45,32 +49,48 @@ describe('ClassSessionCard', () => {
   beforeEach(() => {
     vi.mocked(fetchMyDependents).mockReset();
     vi.mocked(fetchMyDependents).mockResolvedValue([]);
+    vi.mocked(useAuth).mockReturnValue({
+      profile: { default_dependent_id: null },
+    } as ReturnType<typeof useAuth>);
   });
 
-  it('muestra un texto de fallback cuando no hay entrenador disponible', () => {
-    renderCard({ session: BASE_SESSION, ocupadas: 0 });
+  it('muestra el horario, el tipo de clase, el nivel y el entrenador', () => {
+    renderCard({ session: BASE_SESSION });
 
-    expect(screen.getByText('Con entrenador por asignar')).toBeInTheDocument();
+    expect(screen.getByText('18:00–19:00')).toBeInTheDocument();
+    expect(screen.getByText('Boxeo')).toBeInTheDocument();
+    expect(screen.getByText('· Intermedio')).toBeInTheDocument();
+    expect(screen.getByText('entrenador por asignar')).toBeInTheDocument();
   });
 
-  it('muestra "Clase llena" cuando las plazas ocupadas igualan el aforo', () => {
-    renderCard({ session: BASE_SESSION, ocupadas: 20 });
+  it('no muestra el enlace "Ver Clase" si el usuario no está reservado', () => {
+    renderCard({ session: BASE_SESSION });
 
-    expect(screen.getByText('Clase llena')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Ver Clase' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Reservar' })).toBeInTheDocument();
   });
 
-  it('muestra las plazas libres cuando quedan huecos', () => {
-    renderCard({ session: BASE_SESSION, ocupadas: 15 });
+  it('muestra "Ya estás apuntado" y "Ver Clase" cuando hay reserva confirmada', () => {
+    renderCard({
+      session: BASE_SESSION,
+      status: { type: 'confirmed', bookingId: 'booking-1' },
+    });
 
-    expect(screen.getByText('5 plazas libres')).toBeInTheDocument();
-  });
-
-  it('enlaza a la página de lista de la clase', () => {
-    renderCard({ session: BASE_SESSION, ocupadas: 0 });
-
-    expect(screen.getByRole('link', { name: 'Ver lista de la clase' })).toHaveAttribute(
+    expect(screen.getByText('Ya estás apuntado ✓')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Ver Clase' })).toHaveAttribute(
       'href',
       '/clases/1/lista',
     );
+    expect(screen.queryByRole('button', { name: 'Reservar' })).not.toBeInTheDocument();
+  });
+
+  it('muestra "En lista de espera" y ningún enlace cuando está en espera', () => {
+    renderCard({
+      session: BASE_SESSION,
+      status: { type: 'waitlisted', waitlistEntryId: 'wl-1' },
+    });
+
+    expect(screen.getByText('En lista de espera')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Ver Clase' })).not.toBeInTheDocument();
   });
 });

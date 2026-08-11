@@ -12,6 +12,7 @@ export function WaitlistListItem({ entry }: WaitlistListItemProps) {
   const [error, setError] = useState<string | null>(null);
   const { mutateAsync, isPending } = useLeaveWaitlist();
   const { session } = entry;
+  const trainerName = session.trainer?.nombre ?? 'entrenador por asignar';
 
   async function handleLeave() {
     setError(null);
@@ -34,6 +35,7 @@ export function WaitlistListItem({ entry }: WaitlistListItemProps) {
         {formatSpanishDate(session.fecha)} · {formatTime(session.hora_inicio)}–
         {formatTime(session.hora_fin)}
       </p>
+      <p className="text-sm text-ink-muted">Con {trainerName}</p>
       <p className="text-sm font-medium text-rope">En lista de espera</p>
       <Button
         type="button"

@@ -152,6 +152,25 @@ export async function fetchMyBookings(): Promise<BookingWithSession[]> {
   return data as BookingWithSession[];
 }
 
+// A diferencia de fetchMyBookings (solo estado='confirmada', para decidir
+// qué CTA mostrar en una sesión), esta trae TODAS las reservas del usuario
+// sin filtrar por estado — la pestaña "Historial" de Mis reservas necesita
+// ver también las canceladas, no solo las que siguen en pie.
+export async function fetchMyBookingHistory(): Promise<BookingWithSession[]> {
+  const { data, error } = await supabase
+    .from('bookings')
+    .select('*, session:class_sessions(*, trainer:trainers(*))')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    throw new Error(
+      'No se han podido cargar tus clases. Inténtalo de nuevo en unos segundos.',
+    );
+  }
+
+  return data as BookingWithSession[];
+}
+
 export async function fetchMyWaitlistEntries(): Promise<WaitlistEntryWithSession[]> {
   const { data, error } = await supabase
     .from('waitlist_entries')

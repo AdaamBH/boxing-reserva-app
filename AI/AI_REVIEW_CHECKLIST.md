@@ -26,6 +26,7 @@ Checklist a repasar literalmente, punto por punto, antes de decir que una tarea 
 - [ ] Comprobado visualmente en un viewport de móvil (no solo en el monitor de escritorio del editor).
 - [ ] Estados de carga y error visibles y comprensibles (no una pantalla en blanco mientras carga, no un error técnico en crudo).
 - [ ] Textos de cara al usuario en español, claros, sin jerga técnica.
+- [ ] Si la tarea toca rutas/navegación: probado también recargar la página en una ruta interna y el botón "atrás" del navegador, no solo navegar pulsando enlaces (ver `AI/DECISIONS.md`, 2026-08-11 — el 404 de `vercel.json` pasó desapercibido justo por no probar esto).
 
 ## Tests (ver `TESTING.md`)
 

@@ -1,10 +1,18 @@
 import type { AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
+import { withTimeout } from '@/utils/withTimeout';
 import type { RegisterFormValues } from '@/features/auth/schemas';
 
 export interface SignUpResult {
   needsEmailConfirmation: boolean;
 }
+
+// Ver withTimeout.ts: sin esto, una red inestable puede dejar cualquiera de
+// estas llamadas colgada para siempre, con el botón en "Cargando…" sin
+// error ni forma de reintentar salvo recargar a ciegas.
+const AUTH_TIMEOUT_MS = 15_000;
+const TIMEOUT_MESSAGE =
+  'La conexión está tardando demasiado. Comprueba tu conexión a internet e inténtalo de nuevo.';
 
 /**
  * Registra una cuenta nueva. Los datos de perfil (nombre, apellidos,
@@ -19,18 +27,22 @@ export interface SignUpResult {
  * mientras esa opción del proyecto de Supabase siga activada.
  */
 export async function signUp(values: RegisterFormValues): Promise<SignUpResult> {
-  const { error } = await supabase.auth.signUp({
-    email: values.email,
-    password: values.password,
-    options: {
-      data: {
-        nombre: values.nombre,
-        apellidos: values.apellidos,
-        telefono: values.telefono,
-        fecha_nacimiento: values.fechaNacimiento,
+  const { error } = await withTimeout(
+    supabase.auth.signUp({
+      email: values.email,
+      password: values.password,
+      options: {
+        data: {
+          nombre: values.nombre,
+          apellidos: values.apellidos,
+          telefono: values.telefono,
+          fecha_nacimiento: values.fechaNacimiento,
+        },
       },
-    },
-  });
+    }),
+    AUTH_TIMEOUT_MS,
+    TIMEOUT_MESSAGE,
+  );
 
   if (error) {
     throw new Error(translateAuthError(error));
@@ -40,30 +52,46 @@ export async function signUp(values: RegisterFormValues): Promise<SignUpResult> 
 }
 
 export async function signIn(email: string, password: string): Promise<void> {
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { error } = await withTimeout(
+    supabase.auth.signInWithPassword({ email, password }),
+    AUTH_TIMEOUT_MS,
+    TIMEOUT_MESSAGE,
+  );
   if (error) {
     throw new Error(translateAuthError(error));
   }
 }
 
 export async function signOut(): Promise<void> {
-  const { error } = await supabase.auth.signOut();
+  const { error } = await withTimeout(
+    supabase.auth.signOut(),
+    AUTH_TIMEOUT_MS,
+    TIMEOUT_MESSAGE,
+  );
   if (error) {
     throw new Error(translateAuthError(error));
   }
 }
 
 export async function requestPasswordReset(email: string): Promise<void> {
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${window.location.origin}/restablecer-contrasena`,
-  });
+  const { error } = await withTimeout(
+    supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/restablecer-contrasena`,
+    }),
+    AUTH_TIMEOUT_MS,
+    TIMEOUT_MESSAGE,
+  );
   if (error) {
     throw new Error(translateAuthError(error));
   }
 }
 
 export async function updatePassword(newPassword: string): Promise<void> {
-  const { error } = await supabase.auth.updateUser({ password: newPassword });
+  const { error } = await withTimeout(
+    supabase.auth.updateUser({ password: newPassword }),
+    AUTH_TIMEOUT_MS,
+    TIMEOUT_MESSAGE,
+  );
   if (error) {
     throw new Error(translateAuthError(error));
   }
