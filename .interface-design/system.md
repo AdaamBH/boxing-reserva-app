@@ -59,8 +59,18 @@ Barra de pestañas fija abajo en móvil (uso real: de pie en el gimnasio), nav h
 
 Primera pieza pública de la app — antes `/` era un redirect directo a `/clases`, no existía ninguna landing (ver `AI/DECISIONS.md`). `LandingPage` comprueba sesión: autenticado → redirige a `/clases` sin mostrar marketing; sin sesión → `LandingHeader` + `LandingHero` + `LandingFeatures` + `LandingHowItWorks` + `LandingCta` + `LandingFooter`. Reutiliza `CapacityTally` con datos de ejemplo marcados como tales en el hero — la firma visual de la app demostrando su propia ventaja (aforo real), no una promesa de marketing sin más.
 
+- `LandingCtaButton` (`src/features/marketing/components/LandingCtaButton.tsx`) — `Link` con pinta de botón, `variant` (`primary`/`secondary`) × `size` (`sm` para el header, `lg` para hero/CTA final). Único sitio que define esas clases; los 3 CTA de la landing lo reutilizan en vez de repetir la cadena de utilidades.
+- `.bg-canvas-texture` (`src/styles/index.css`) — trama cruzada al 3.5% de opacidad sobre `ink`, evoca el tejido de la lona del ring. Solo en las secciones "bookend" de la landing (`LandingHero`, `LandingCta`); nunca en pantallas de la app real, donde el fondo se mantiene plano a propósito.
+- Conector de "cuerda de rin" en `LandingHowItWorks`: línea discontinua (`border-dashed border-rope/50`) uniendo los 3 pasos numerados en `sm:` — mismo lenguaje visual que `CapacityTally`/los dorsales, aplicado como elemento estructural en vez de solo como color de estado.
+- `LandingFeatures` ya no es una rejilla 2×2 de tarjetas idénticas: la primera feature ("Aforo real, sin sorpresas", el diferenciador real del proyecto) tiene tratamiento propio más ancho/grande; las otras tres quedan como fila de apoyo debajo. Jerarquía real en vez de 4 cajas del mismo peso.
+- Footer con 3 puntos de confianza reales (aforo en tiempo real, cancelación 1h, RGPD/menores) — hechos ya documentados en `AI/PROJECT_CONTEXT.md`/`SECURITY.md`, no reclamos de marketing inventados.
+
+## Estados de carga: `Skeleton`
+
+`src/components/Skeleton.tsx` — bloque `animate-pulse bg-chalk`, sin más lógica. Se compone en skeletons con la silueta exacta del componente real (`ClassSessionCardSkeleton` en `features/classes/components`, `BookingListItemSkeleton` en `features/bookings/components`) para que las listas no salten al llegar los datos — sustituye a un simple texto "Cargando…" en `ReservasPage` y `MyBookingsPage`. Siempre con un `<span className="sr-only">` describiendo el estado y `aria-busy="true"` en el contenedor, para no perder el aviso accesible que sí daba el texto.
+
 ## Pendiente / deliberadamente fuera de esta pasada
 
 - Modo oscuro: fuera de alcance del MVP (`AI/PROJECT_CONTEXT.md`) — no se ha construido ninguna variante oscura de estos tokens.
-- Landing: sin fotografía real del gimnasio ni testimonios (no fabricados a propósito) — añadir cuando exista contenido real.
-- Code-splitting del bundle (aviso de Vite en cada build, ~620 kB) — no es un problema de diseño, pendiente si se vuelve relevante para el rendimiento en móvil.
+- Landing: sin fotografía real del gimnasio ni testimonios (no fabricados a propósito) — añadir cuando exista contenido real. Sin dirección/horario reales en el footer por el mismo motivo.
+- Skeletons de carga: cubiertos `ReservasPage` y `MyBookingsPage` (las dos pantallas de mayor uso); `SessionRosterPage`/`TrainersPage`/admin siguen con texto "Cargando…" simple — extender si se detecta que importa ahí.

@@ -227,6 +227,7 @@ export type Database = {
         Row: {
           apellidos: string;
           created_at: string;
+          default_dependent_id: string | null;
           fecha_nacimiento: string | null;
           id: string;
           nombre: string;
@@ -236,6 +237,7 @@ export type Database = {
         Insert: {
           apellidos: string;
           created_at?: string;
+          default_dependent_id?: string | null;
           fecha_nacimiento?: string | null;
           id: string;
           nombre: string;
@@ -245,13 +247,22 @@ export type Database = {
         Update: {
           apellidos?: string;
           created_at?: string;
+          default_dependent_id?: string | null;
           fecha_nacimiento?: string | null;
           id?: string;
           nombre?: string;
           role?: string;
           telefono?: string | null;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: 'profiles_default_dependent_id_fkey';
+            columns: ['default_dependent_id'];
+            isOneToOne: false;
+            referencedRelation: 'dependents';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       trainers: {
         Row: {

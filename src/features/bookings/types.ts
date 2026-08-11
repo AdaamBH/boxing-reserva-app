@@ -45,6 +45,15 @@ export interface LeaveWaitlistParams {
   waitlistEntryId: string;
 }
 
+// Con qué relación (si alguna) tiene el usuario actual con una sesión
+// concreta — lo que decide qué acción mostrar en su tarjeta (Reservar /
+// Ya apuntado + ver lista / En lista de espera). Un usuario nunca tiene
+// más de un estado por sesión: book_class_session bloquea ALREADY_BOOKED
+// si ya hay reserva o entrada en lista de espera para esa sesión.
+export type SessionBookingStatus =
+  | { type: 'confirmed'; bookingId: string }
+  | { type: 'waitlisted'; waitlistEntryId: string };
+
 // "Nombre I." (nombre + inicial del apellido) — mismo formato para todos,
 // adultos y menores, ya truncado por get_session_roster en la propia
 // base de datos (nunca se recibe el apellido completo de otra persona).

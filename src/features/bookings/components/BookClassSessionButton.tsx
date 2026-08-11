@@ -1,19 +1,19 @@
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Link } from 'react-router-dom';
-import { bookingBeneficiarySchema } from '@/features/bookings/schemas';
-import type { BookingBeneficiaryFormValues } from '@/features/bookings/schemas';
-import { useBookClassSession } from '@/features/bookings/hooks/useBookClassSession';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useDependents } from '@/features/dependents/hooks/useDependents';
-import { Button } from '@/components/Button';
-import { SelectField } from '@/components/SelectField';
+import { useBookClassSession } from '@/features/bookings/hooks/useBookClassSession';
 
 interface BookClassSessionButtonProps {
   sessionId: string;
   disabled?: boolean;
 }
 
+/**
+ * Sin selector de "¿para quién?" — el dependiente por defecto (si el
+ * usuario ha activado ese ajuste en Ajustes) se aplica solo. Reservar para
+ * otra persona puntualmente significa apagar el ajuste primero, no elegir
+ * en cada reserva (ver AI/DECISIONS.md).
+ */
 export function BookClassSessionButton({
   sessionId,
   disabled = false,
@@ -21,20 +21,17 @@ export function BookClassSessionButton({
   const [feedback, setFeedback] = useState<{ isError: boolean; text: string } | null>(
     null,
   );
+  const { profile } = useAuth();
   const { data: dependents } = useDependents();
   const { mutateAsync, isPending } = useBookClassSession();
-  const { register, handleSubmit } = useForm<BookingBeneficiaryFormValues>({
-    resolver: zodResolver(bookingBeneficiarySchema),
-    defaultValues: { beneficiary: 'self' },
-  });
 
-  async function onSubmit(values: BookingBeneficiaryFormValues) {
+  const defaultDependentId = profile?.default_dependent_id ?? null;
+  const defaultDependent = dependents?.find((d) => d.id === defaultDependentId);
+
+  async function handleBook() {
     setFeedback(null);
     try {
-      const result = await mutateAsync({
-        sessionId,
-        dependentId: values.beneficiary === 'self' ? null : values.beneficiary,
-      });
+      const result = await mutateAsync({ sessionId, dependentId: defaultDependentId });
 
       if (!result.success) {
         setFeedback({ isError: true, text: result.error.message });
@@ -58,35 +55,19 @@ export function BookClassSessionButton({
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-2">
-      {dependents && dependents.length > 0 && (
-        <SelectField
-          label="¿Para quién es la reserva?"
-          placeholder="Selecciona"
-          options={[
-            { value: 'self', label: 'Para mí' },
-            ...dependents.map((dependent) => ({
-              value: dependent.id,
-              label: `${dependent.nombre} ${dependent.apellidos}`,
-            })),
-          ]}
-          {...register('beneficiary')}
-        />
-      )}
-
-      {/* Única forma de llegar a /dependientes/nuevo desde la app: sin este
-          enlace la ruta solo era alcanzable escribiendo la URL a mano
-          (detectado por pruebas automatizadas — ver DECISIONS.md). */}
-      <Link
-        to="/dependientes/nuevo"
-        className="self-start text-sm font-medium text-brand-600 underline-offset-2 hover:underline"
+    <div className="flex flex-col gap-1">
+      <button
+        type="button"
+        disabled={disabled || isPending}
+        onClick={handleBook}
+        className="inline-flex min-h-11 w-fit items-center text-base font-semibold text-brand-600 transition-colors hover:text-brand-700 active:scale-[0.97] disabled:cursor-not-allowed disabled:text-ink-faint disabled:active:scale-100"
       >
-        ¿Reservas para un menor a tu cargo? Añade un dependiente
-      </Link>
+        {isPending ? 'Reservando…' : 'Reservar'}
+      </button>
 
-      <Button type="submit" isLoading={isPending} disabled={disabled}>
-        Reservar
-      </Button>
+      {defaultDependent && !feedback && (
+        <p className="text-xs text-ink-faint">Para {defaultDependent.nombre}</p>
+      )}
 
       {feedback && (
         <p
@@ -96,6 +77,6 @@ export function BookClassSessionButton({
           {feedback.text}
         </p>
       )}
-    </form>
+    </div>
   );
 }

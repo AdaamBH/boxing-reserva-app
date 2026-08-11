@@ -14,6 +14,7 @@ export function BookingListItem({ booking }: BookingListItemProps) {
   const { mutateAsync, isPending } = useCancelBooking();
   const { session } = booking;
   const cancellable = canCancelBooking(session.fecha, session.hora_inicio);
+  const trainerName = session.trainer?.nombre ?? 'entrenador por asignar';
 
   async function handleCancel() {
     setError(null);
@@ -36,6 +37,7 @@ export function BookingListItem({ booking }: BookingListItemProps) {
         {formatSpanishDate(session.fecha)} · {formatTime(session.hora_inicio)}–
         {formatTime(session.hora_fin)}
       </p>
+      <p className="text-sm text-ink-muted">Con {trainerName}</p>
       <Button
         type="button"
         variant="secondary"

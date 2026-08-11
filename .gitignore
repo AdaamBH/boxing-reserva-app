@@ -47,3 +47,8 @@ coverage
 
 # Vercel
 .vercel
+
+# TestSprite: los .py generados y tmp/config.json incrustan las credenciales
+# reales pasadas por additionalInstruction (ver AI/DECISIONS.md, 2026-08-08) en
+# texto plano — nunca se commitea, todo el directorio es descartable/regenerable.
+testsprite_tests/
