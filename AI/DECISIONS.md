@@ -321,3 +321,25 @@ Implementación: `get_session_roster(p_session_id)` (`SECURITY DEFINER`, `stable
 **Alternativas consideradas:** Seguir sin mostrar el detalle técnico por mantener el texto 100% "sin jerga" (descartada — el checklist pide textos claros para el usuario, pero aquí el objetivo es depurar un fallo real en producción con un cliente no técnico como único par de ojos disponible; el detalle va en texto pequeño y separado del mensaje principal, no sustituye la explicación amigable). Forzar un `signOut()` automático en cuanto `profileError` aparece, sin esperar a que el usuario pulse nada (descartada — un fallo de red transitorio no debería borrar una sesión válida; cerrar sesión debe ser una acción explícita del usuario, no una reacción automática ante cualquier error).
 
 **Consecuencias:** Si el mensaje técnico que aparezca la próxima vez es un error de autenticación (401/JWT inválido), confirma la teoría de sesión corrupta y el botón nuevo lo resuelve. Si en cambio es un error de red genuino (`Failed to fetch`, DNS, timeout), apunta a algo específico del dispositivo/red del cliente (VPN, extensión, red corporativa/móvil bloqueando el dominio de Supabase) que haría falta investigar con él directamente, no desde aquí.
+
+---
+
+## [2026-08-11] Causa raíz confirmada: el registro de cuentas nuevas falla siempre (SMTP de pruebas de Supabase, no un bug de la app)
+
+**Contexto:** El cliente reportó estar completamente bloqueado: el login daba un error tipo "no se encontró el usuario" y el registro de una cuenta nueva se quedaba esperando un email de confirmación que nunca llegaba. Se probó el registro directamente contra el proyecto real de Supabase (`supabase.auth.signUp` desde Node, con un email de prueba) para reproducirlo de forma controlada. El propio servidor devolvió el motivo exacto en los logs de Auth:
+
+```
+error: gomail: could not send email 1: 550 "Invalid `to` field. Please use our
+testing email address instead of domains like `example.com`."
+status: 500, path: /signup
+```
+
+Confirmado: el proyecto de Supabase sigue usando el **servicio de email de pruebas por defecto** (el checklist de `DEPLOYMENT.md` ya marcaba esto como pendiente: "Resend como SMTP personalizado, no el servicio de pruebas por defecto") — ese servicio rechaza cualquier dirección de destino que no sea su propia dirección de pruebas interna. Cualquier registro nuevo, con cualquier email real, falla siempre con un 500 en el paso de enviar la confirmación; GoTrue revierte la creación del usuario cuando el envío falla, así que ni siquiera queda una fila a medias en `auth.users`. Esto no es intermitente ni depende de la red del cliente — falla el 100% de las veces hasta que se configure un proveedor de email real.
+
+**Decisión:** Dos partes:
+1. **Desbloqueo inmediato de la cuenta ya existente** (`adambenrahal250@gmail.com`, ya confirmada, ya admin — no necesitaba ningún email): contraseña reestablecida directamente en `auth.users` vía SQL (`crypt(nueva_contraseña, gen_salt('bf'))`, con `pgcrypto` ya habilitado en el proyecto), verificado con un login real de extremo a extremo (sesión + perfil) antes de dar la contraseña nueva al cliente. Sin esto no había forma de que entrara sin depender del email, que es justo lo que está roto.
+2. **Pendiente, requiere una decisión/acción del cliente, no se puede resolver solo con código**: configurar un proveedor SMTP real (Resend, que el proyecto ya usa para los emails transaccionales de reserva vía su API — Fase 5) en Supabase → Authentication → Emails → SMTP Settings. Ninguna herramienta disponible aquí puede tocar esa configuración (vive en la plataforma de Supabase, no en Postgres ni en el código del repo) — hace falta hacerlo desde el panel de Supabase con una cuenta de Resend y un dominio verificado.
+
+**Alternativas consideradas:** Generar el hash de la contraseña nueva "a mano" con una librería bcrypt genérica en vez de `pgcrypto` (descartada — `pgcrypto` ya está habilitado en el proyecto y es exactamente el mismo algoritmo que usa GoTrue internamente, cero dependencias nuevas). Desactivar por completo "Confirm email" en Supabase para que el registro funcione sin enviar ningún email (descartada por ahora — es una decisión de producto/seguridad ya tomada deliberadamente, ver comentario en `authApi.ts` y `SECURITY.md`; no se cambia sin decisión explícita del cliente, y no hay herramienta disponible aquí para hacerlo de todas formas).
+
+**Consecuencias:** El registro de cuentas nuevas (`/registro`) seguirá fallando siempre, para cualquier persona, hasta que se conecte un SMTP real — esto es bloqueante antes de dar la app a ningún alumno de verdad, no solo un detalle de pulido. Mientras tanto, cualquier cuenta nueva que haga falta para pruebas debe crearse igual que esta: contraseña puesta directamente por SQL en vez de por registro propio. Actualizar el checklist de `DEPLOYMENT.md` cuando Resend quede conectado, y probar un registro real de principio a fin como parte de ese checklist antes de considerar el proyecto listo para producción real.
