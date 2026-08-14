@@ -21,6 +21,8 @@ const BUSINESS_ERROR_MESSAGES: Record<BookingErrorCode, string> = {
   SESSION_NOT_FOUND: 'Esta clase ya no existe.',
   SESSION_CANCELLED: 'Esta clase ha sido cancelada.',
   SESSION_IN_PAST: 'Esta clase ya ha empezado o ha terminado.',
+  SESSION_TOO_FAR_AHEAD:
+    'Esta clase todavía no se puede reservar: se abren semana a semana.',
   NOT_YOUR_DEPENDENT: 'Ese dependiente no pertenece a tu cuenta.',
   ALREADY_BOOKED: 'Ya tienes una reserva o estás en la lista de espera para esta clase.',
   BOOKING_NOT_FOUND: 'Esa reserva no existe o no te pertenece.',
@@ -32,7 +34,7 @@ function isBookingErrorCode(value: string): value is BookingErrorCode {
   return value in BUSINESS_ERROR_MESSAGES;
 }
 
-// El MESSAGE que lanza la función de Postgres es siempre uno de los 8
+// El MESSAGE que lanza la función de Postgres es siempre uno de los
 // códigos conocidos (los controlamos nosotros en la migración) — si algún
 // día no lo fuera, es una señal de un bug real, no un resultado de negocio
 // que debamos fingir reconocer.

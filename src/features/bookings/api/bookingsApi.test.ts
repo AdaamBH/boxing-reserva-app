@@ -57,6 +57,26 @@ describe('bookClassSession', () => {
     });
   });
 
+  // Tope de la ventana de reserva: la RPC lo rechaza aunque la pantalla
+  // haya dejado llegar hasta ahí (ver bookingWindow.ts y la migración
+  // 20260814190000).
+  it('traduce SESSION_TOO_FAR_AHEAD a un resultado tipado', async () => {
+    rpcMock.mockResolvedValue({
+      data: null,
+      error: { code: 'BK001', message: 'SESSION_TOO_FAR_AHEAD' },
+    });
+
+    const result = await bookClassSession({ sessionId: 'session-1' });
+
+    expect(result).toEqual({
+      success: false,
+      error: {
+        code: 'SESSION_TOO_FAR_AHEAD',
+        message: 'Esta clase todavía no se puede reservar: se abren semana a semana.',
+      },
+    });
+  });
+
   it('relanza como excepción genérica cualquier error que no sea de negocio', async () => {
     rpcMock.mockResolvedValue({
       data: null,

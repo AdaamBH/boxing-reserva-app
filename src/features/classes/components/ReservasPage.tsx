@@ -16,6 +16,7 @@ import {
   parseLocalDate,
   toDateString,
 } from '@/utils/calendarDates';
+import { getLastBookableDate, getLastBookableWeekStart } from '@/utils/bookingWindow';
 
 type ViewMode = 'week' | 'month';
 
@@ -29,14 +30,35 @@ function initialDateFromQuery(fechaParam: string | null): Date {
   return new Date();
 }
 
+/**
+ * Un `?fecha=` de una semana futura no puede colarse por encima del tope
+ * (la URL es editable a mano), así que se recorta al llegar.
+ */
+function clampToBookingWindow(date: Date, lastBookableDate: Date): Date {
+  return toDateString(date) > toDateString(lastBookableDate) ? lastBookableDate : date;
+}
+
 export function ReservasPage() {
   const [searchParams] = useSearchParams();
   const [viewMode, setViewMode] = useState<ViewMode>('week');
+
+  // Se calculan una sola vez por montaje: el tope no debe moverse bajo los
+  // pies del usuario mientras navega por la pantalla.
+  const lastBookableDate = useMemo(() => getLastBookableDate(), []);
+  const lastBookableWeekStart = useMemo(() => getLastBookableWeekStart(), []);
+
   const [selectedDate, setSelectedDate] = useState(() =>
-    initialDateFromQuery(searchParams.get('fecha')),
+    clampToBookingWindow(
+      initialDateFromQuery(searchParams.get('fecha')),
+      getLastBookableDate(),
+    ),
   );
   const [weekStart, setWeekStart] = useState(() => getWeekStart(selectedDate));
   const [monthDate, setMonthDate] = useState(() => getMonthStart(selectedDate));
+
+  const canGoNextWeek = toDateString(weekStart) < toDateString(lastBookableWeekStart);
+  const canGoNextMonth =
+    toDateString(monthDate) < toDateString(getMonthStart(lastBookableDate));
 
   const weekRangeStart = toDateString(weekStart);
   const weekRangeEnd = toDateString(addDays(weekStart, 6));
@@ -75,15 +97,20 @@ export function ReservasPage() {
     setSelectedDate(nextWeekStart);
   }
 
+  function handleNextWeek() {
+    if (!canGoNextWeek) return;
+    handleSelectWeek(addDays(weekStart, 7));
+  }
+
   function handleSelectMonthDate(date: Date) {
     setSelectedDate(date);
     setWeekStart(getWeekStart(date));
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-4 py-6">
+    <div className="mx-auto flex w-full max-w-2xl flex-col gap-3 px-4 pt-3 pb-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold tracking-wide text-ink uppercase">
+        <h1 className="text-lg font-semibold tracking-wide text-ink uppercase">
           Reservas
         </h1>
 
@@ -104,7 +131,8 @@ export function ReservasPage() {
           sessionCountByDate={sessionCountByDate}
           onSelectDate={setSelectedDate}
           onPrevWeek={() => handleSelectWeek(addDays(weekStart, -7))}
-          onNextWeek={() => handleSelectWeek(addDays(weekStart, 7))}
+          onNextWeek={handleNextWeek}
+          canGoNextWeek={canGoNextWeek}
         />
       ) : (
         <MonthGrid
@@ -113,8 +141,17 @@ export function ReservasPage() {
           sessionCountByDate={sessionCountByDate}
           onSelectDate={handleSelectMonthDate}
           onPrevMonth={() => setMonthDate(addMonths(monthDate, -1))}
-          onNextMonth={() => setMonthDate(addMonths(monthDate, 1))}
+          onNextMonth={() => canGoNextMonth && setMonthDate(addMonths(monthDate, 1))}
+          lastBookableDate={lastBookableDate}
+          canGoNextMonth={canGoNextMonth}
         />
+      )}
+
+      {!canGoNextWeek && viewMode === 'week' && (
+        <p className="text-xs text-ink-faint">
+          Las clases se abren semana a semana, para que todo el mundo tenga oportunidad de
+          coger sitio.
+        </p>
       )}
 
       {isLoading && (
