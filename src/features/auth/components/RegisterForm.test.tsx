@@ -51,9 +51,23 @@ describe('RegisterForm', () => {
     await user.click(screen.getByRole('button', { name: 'Crear cuenta' }));
 
     await waitFor(() => {
-      expect(onSuccess).toHaveBeenCalledWith(validInput.email);
+      expect(onSuccess).toHaveBeenCalledWith(validInput.email, true);
     });
     expect(signUp).toHaveBeenCalledWith(validInput);
+  });
+
+  it('propaga needsEmailConfirmation=false cuando el registro ya deja sesión iniciada', async () => {
+    vi.mocked(signUp).mockResolvedValue({ needsEmailConfirmation: false });
+    const onSuccess = vi.fn();
+    const user = userEvent.setup();
+
+    render(<RegisterForm onSuccess={onSuccess} />);
+    await fillValidForm(user);
+    await user.click(screen.getByRole('button', { name: 'Crear cuenta' }));
+
+    await waitFor(() => {
+      expect(onSuccess).toHaveBeenCalledWith(validInput.email, false);
+    });
   });
 
   it('muestra el error traducido si signUp falla, sin avisar de éxito', async () => {

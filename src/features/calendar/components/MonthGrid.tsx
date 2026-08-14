@@ -14,6 +14,14 @@ interface MonthGridProps {
   onSelectDate: (date: Date) => void;
   onPrevMonth: () => void;
   onNextMonth: () => void;
+  /**
+   * Último día reservable (ver bookingWindow.ts). Los días posteriores se
+   * pintan atenuados y no son pulsables: sin esto, la vista de Mes sería la
+   * puerta de atrás para llegar a una semana que la vista de Semana no
+   * deja alcanzar.
+   */
+  lastBookableDate: Date;
+  canGoNextMonth: boolean;
 }
 
 /**
@@ -29,9 +37,12 @@ export function MonthGrid({
   onSelectDate,
   onPrevMonth,
   onNextMonth,
+  lastBookableDate,
+  canGoNextMonth,
 }: MonthGridProps) {
   const gridDates = getMonthGridDates(monthDate);
   const today = new Date();
+  const lastBookableDateStr = toDateString(lastBookableDate);
 
   return (
     <div className="flex flex-col gap-2">
@@ -52,8 +63,9 @@ export function MonthGrid({
         <button
           type="button"
           onClick={onNextMonth}
+          disabled={!canGoNextMonth}
           aria-label="Mes siguiente"
-          className="flex h-9 w-9 items-center justify-center rounded-lg text-ink-muted hover:bg-chalk hover:text-ink"
+          className="flex h-9 w-9 items-center justify-center rounded-lg text-ink-muted hover:bg-chalk hover:text-ink disabled:pointer-events-none disabled:opacity-30"
         >
           <ChevronRightIcon className="h-5 w-5" />
         </button>
@@ -73,7 +85,9 @@ export function MonthGrid({
           const selected = isSameDate(day, selectedDate);
           const isToday = isSameDate(day, today);
 
-          if (!inMonth) {
+          // Fuera del mes (relleno) o más allá del tope reservable: en
+          // ambos casos es un día que solo da contexto visual, no se pulsa.
+          if (!inMonth || dateStr > lastBookableDateStr) {
             return (
               <span key={dateStr} className="py-2 text-center text-sm text-ink-faint/40">
                 {day.getDate()}

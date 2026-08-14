@@ -343,3 +343,86 @@ Confirmado: el proyecto de Supabase sigue usando el **servicio de email de prueb
 **Alternativas consideradas:** Generar el hash de la contraseña nueva "a mano" con una librería bcrypt genérica en vez de `pgcrypto` (descartada — `pgcrypto` ya está habilitado en el proyecto y es exactamente el mismo algoritmo que usa GoTrue internamente, cero dependencias nuevas). Desactivar por completo "Confirm email" en Supabase para que el registro funcione sin enviar ningún email (descartada por ahora — es una decisión de producto/seguridad ya tomada deliberadamente, ver comentario en `authApi.ts` y `SECURITY.md`; no se cambia sin decisión explícita del cliente, y no hay herramienta disponible aquí para hacerlo de todas formas).
 
 **Consecuencias:** El registro de cuentas nuevas (`/registro`) seguirá fallando siempre, para cualquier persona, hasta que se conecte un SMTP real — esto es bloqueante antes de dar la app a ningún alumno de verdad, no solo un detalle de pulido. Mientras tanto, cualquier cuenta nueva que haga falta para pruebas debe crearse igual que esta: contraseña puesta directamente por SQL en vez de por registro propio. Actualizar el checklist de `DEPLOYMENT.md` cuando Resend quede conectado, y probar un registro real de principio a fin como parte de ese checklist antes de considerar el proyecto listo para producción real.
+
+---
+
+## [2026-08-14] Re-verificado: sigue siendo el mismo SMTP de pruebas; contraseña de admin reseteada de nuevo
+
+**Contexto:** El cliente reportó de nuevo los tres síntomas del bloqueo anterior: sin email de confirmación al registrarse, un segundo registro con otro email dando "Algo ha fallado. Inténtalo de nuevo en unos segundos." (el mensaje genérico de `translateAuthError`, ver `authApi.ts`), y login fallido con `adambenrahal250@gmail.com` / `admin1234`. Antes de tocar nada se volvió a comprobar en vivo contra el proyecto real (`cyztsnedqdvuvcoewbco`): `auth.users` sigue teniendo **una sola fila**, la cuenta admin — ningún intento de registro reciente dejó ni rastro, confirmando que la causa raíz del 2026-08-11 (SMTP de pruebas por defecto, rechaza cualquier email real) sigue exactamente igual; no se ha tocado el SMTP de Supabase desde entonces. No hay ningún bug de código nuevo que perseguir aquí.
+
+El login de admin fallaba porque `last_sign_in_at` no había cambiado desde el 2026-08-11: la contraseña puesta por SQL aquella vez (no documentada en texto plano, por seguridad) nunca fue `admin1234` — el cliente estaba probando una contraseña que no era la real.
+
+**Decisión:** Contraseña de `adambenrahal250@gmail.com` reseteada de nuevo por SQL (`pgcrypto`, mismo mecanismo) a `admin1234` tal cual el cliente esperaba. Verificado de extremo a extremo contra el proyecto real (no simulado): `POST /auth/v1/token?grant_type=password` devuelve `access_token` y, con ese token, `GET /rest/v1/profiles` devuelve la fila con `role: admin` — el flujo completo que hace la app (sesión + perfil vía RLS) funciona. No se lanzaron agentes a "arreglar" código porque no hay código roto: los tres síntomas son la misma causa de infraestructura ya documentada, más una contraseña desincronizada.
+
+**Pendiente (acción del cliente, no de código):** conectar Resend como SMTP personalizado en Supabase → Authentication → Emails → SMTP Settings (`smtp.resend.com`, usuario `resend`, contraseña = la `RESEND_API_KEY` ya presente en `.env`). Hasta que eso ocurra, el registro (`/registro`) seguirá fallando el 100% de las veces para cualquier email real — no es intermitente, no depende del navegador ni de la red del cliente.
+
+**Consecuencias:** Si `admin1234` vuelve a fallar en el futuro, no repetir el reseteo a ciegas — comprobar primero `last_sign_in_at` en `auth.users` para confirmar si el problema es de nuevo una contraseña desincronizada o algo distinto. Cualquier cuenta de prueba nueva sigue necesitando crearse por SQL, no por `/registro`, mientras el SMTP no esté conectado.
+
+---
+
+## [2026-08-14] SMTP conectado a Resend, pero en modo prueba; y el registro asumía "revisa tu email" pase lo que pase
+
+**Contexto:** El cliente conectó Resend como SMTP en Supabase. El registro seguía fallando, pero **con un error distinto** — señal de que la config sí había surtido efecto. El error exacto de los logs de Auth (`/signup`, status 500):
+
+```
+gomail: could not send email 1: 550 "You can only send testing emails to your own
+email address (adambenrahal250@gmail.com). To send emails to other recipients,
+please verify a domain at resend.com/domains, and change the `from` address to an
+email using this domain."
+```
+
+Es decir: la cuenta de Resend está en **modo prueba** (sin dominio verificado), y solo acepta como destinatario la dirección del propio titular. Se comprobó que el truco del "+" (`adambenrahal250+prueba1@gmail.com`) **no** cuenta como la propia dirección — Resend lo rechaza igual. Se verificó además que el canal SMTP funciona de verdad enviando un `POST /auth/v1/recover` a la dirección del titular: HTTP 200, correo entregado. La tubería está bien; lo único que falta es un dominio verificado.
+
+En paralelo se detectaron dos problemas más:
+
+1. **`.env` local apuntaba a una Supabase local muerta** (`http://192.168.1.162:54321` — una IP de LAN de cuando se probaba desde el móvil). Confirmado inaccesible (timeout) y con Docker ni siquiera arrancado, así que `npm run dev` no podía autenticar contra nada. Corregido para apuntar al proyecto cloud (`.env` está en `.gitignore`, es config local de cada máquina).
+2. **Bug de código latente:** `signUp` en `authApi.ts` devolvía `needsEmailConfirmation: true` **fijo**, y `RegisterPage` mostraba siempre `CheckEmailNotice`. Eso funcionaba solo mientras la confirmación por email estuviera activa; en cuanto se desactive, Supabase devuelve sesión y el usuario quedaría mirando un "revisa tu email" esperando un correo que nunca va a llegar, **sin saber que ya tiene la sesión iniciada**.
+
+**Decisión:**
+1. `signUp` ahora deduce `needsEmailConfirmation` de la respuesta real (`data.session === null`) en vez de asumirlo. `RegisterForm` propaga ese dato y `RegisterPage` decide el final: aviso de "revisa tu email", o navegación directa a `/clases` como tras un login. Esto es **robusto a las dos configuraciones**: cuando el cliente verifique un dominio y vuelva a activar la confirmación, el código sigue siendo correcto sin tocar nada. Cubierto con tests (`authApi.test.ts` para ambos casos de la respuesta, `RegisterPage.test.tsx` como test de regresión del final equivocado).
+2. **Desactivar temporalmente "Confirm email"** en Supabase → Authentication → Providers → Email, elegido por el cliente al no disponer de dominio propio ni preverlo a corto plazo. Es la única forma de desbloquear el registro sin dominio verificado. **OJO: al cierre del 2026-08-14 este paso seguía SIN aplicarse.** El cliente creía haberlo hecho, pero al verificarlo antes de guardar el proyecto, un `POST /auth/v1/signup` real contra el proyecto seguía devolviendo `500 Error sending confirmation email` — prueba de que GoTrue sigue intentando enviar la confirmación — y `auth.users` seguía teniendo una única fila. Mientras no se aplique, el registro falla el 100% de las veces, para cualquier email.
+
+**Alternativas consideradas:** Verificar un dominio en Resend (es la solución correcta y la preferida por el cliente, descartada *por ahora* solo porque no tiene ningún dominio ni va a tenerlo a corto plazo — sigue siendo el objetivo). Seguir creando cada cuenta de prueba por SQL (descartada — no escala y no prueba el flujo real de registro, que es justo lo que hay que validar).
+
+**Consecuencias — importante antes de lanzar:** Con "Confirm email" desactivado, cualquiera puede registrarse con un email que no le pertenece, porque nadie verifica que sea suyo. Es aceptable mientras el proyecto está en desarrollo y solo lo usan el cliente y sus pruebas, pero **no es aceptable en producción real con alumnos y menores de por medio** (ver `SECURITY.md`): antes de dar la app a nadie hay que verificar un dominio en Resend, cambiar el `from` a ese dominio y **volver a activar la confirmación**. Añadir esos tres pasos al checklist de `DEPLOYMENT.md`. El código de registro ya soporta ambos modos, así que revertirlo es solo cambiar el ajuste en Supabase, sin tocar el repositorio.
+
+---
+
+## [2026-08-14] CAUSA RAÍZ REAL: producción apuntaba a un proyecto de Supabase equivocado y vacío
+
+**Contexto:** Tras todo lo anterior, el cliente seguía sin poder entrar, ahora con un error nuevo y muy revelador: `Could not find the table 'public.profiles' in the schema cache` (PGRST205). Ese mensaje era incompatible con lo ya verificado — la tabla existe y PostgREST la servía sin problema (HTTP 200) en `cyztsnedqdvuvcoewbco`. Si el servidor está bien pero el cliente dice que la tabla no existe, es que **el cliente no está hablando con ese servidor**.
+
+Se descartó primero el entorno local (`.env` ya corregido, Supabase local muerta y Docker apagado — no podía ser el origen de una respuesta de PostgREST). Quedaba producción, así que se fue a la fuente definitiva: **descargar el bundle JS publicado en `boxing-reserva-app.vercel.app` y buscar dentro la URL de Supabase compilada**. Resultado:
+
+```
+https://jeqnejrucxkljsyuvqwt.supabase.co    <-- el que usaba la web
+https://cyztsnedqdvuvcoewbco.supabase.co    <-- el que tiene TODO (migraciones, RPCs, cuentas)
+```
+
+Consultando ese proyecto con su propia clave se reprodujo el error del cliente **exactamente**: `PGRST205, Could not find the table 'public.profiles'`. Es un proyecto **completamente vacío**: sin migraciones aplicadas, sin tablas, sin cuentas. Ni siquiera aparece en la cuenta de Supabase del cliente (`list_projects` devuelve solo uno), lo que apunta a que lo creó automáticamente la integración Vercel↔Supabase al desplegar, sobrescribiendo las variables buenas. Las variables de entorno de Vercel llevaban **28 días** así.
+
+Esto reinterpreta hacia atrás varios diagnósticos anteriores: el "no encuentra usuario" al iniciar sesión en producción nunca fue una contraseña ni una sesión corrupta ni la red del cliente — **la cuenta existía en un proyecto y la web preguntaba a otro**. Las entradas previas del 2026-08-11 investigaron a fondo RLS, `withTimeout` y la red, todo correcto, porque se dio por supuesto que la web hablaba con el proyecto que se estaba inspeccionando. Nadie verificó esa suposición hasta ahora.
+
+**Decisión:** `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` reescritas en Vercel (Production y Preview) apuntando a `cyztsnedqdvuvcoewbco`, y redespliegue a producción. Verificado sobre la web ya publicada, con la clave que sirve el bundle nuevo: login → sesión creada; `GET /rest/v1/profiles` → devuelve la fila admin (justo la consulta que fallaba); `GET /rest/v1/class_sessions` → devuelve datos.
+
+**Alternativas consideradas:** Aplicar las migraciones al proyecto vacío para "arreglarlo" en su sitio (descartada — tendría dos proyectos divergentes y los datos y cuentas reales viven en el otro; el problema no es que falte el esquema, es que se apunta al sitio equivocado).
+
+**Consecuencias:** Vigilar que la integración Vercel↔Supabase no vuelva a reinyectar las variables del proyecto vacío en un despliegue futuro — si el error PGRST205 reaparece, comprobar **primero** la URL compilada en el bundle antes de investigar nada más. Lección general: cuando el error del cliente contradiga lo verificado en el servidor, la primera hipótesis debe ser "no es el mismo servidor", y se comprueba en un minuto leyendo el bundle desplegado; hacerlo antes habría ahorrado tres rondas de diagnóstico. Añadido al checklist de `DEPLOYMENT.md`.
+
+---
+
+## [2026-08-14] Ventana de reserva: solo la semana en curso y la siguiente
+
+**Contexto:** Petición del cliente, no prevista en ningún documento de `AI/`. `pg_cron` genera `class_sessions` con 4 semanas de antelación (ver `DATABASE.md`) y la pantalla de Reservas dejaba navegar libremente por todas: en la práctica, quien entraba primero podía reservar de una sentada las clases de todo el mes, y acababan entrando siempre los mismos. El cliente lo planteó como un problema de reparto justo, no de rendimiento: "que también tengan oportunidad los más avispados y no siempre los mismos".
+
+**Decisión:** Ventana de **la semana en curso + 1** (elegida explícitamente por el cliente frente a +2). El último día reservable es el domingo de la semana siguiente. Aplicada en tres capas, porque una sola no basta:
+
+1. **Postgres (la que manda):** `book_class_session` rechaza con `SESSION_TOO_FAR_AHEAD` cualquier sesión posterior a `date_trunc('week', hoy_madrid) + 13` (migración `20260814190000`). El cálculo va en hora de Madrid, no en UTC: a las 00:30 del lunes en España `now()` en UTC todavía es domingo, y la ventana se abriría un día tarde para todo el gimnasio.
+2. **Pantalla:** `src/utils/bookingWindow.ts` con `BOOKABLE_WEEKS_AHEAD`. La flecha de "semana siguiente" se desactiva al llegar al tope, el gesto de deslizar hacia delante se ignora (si no, sería una puerta trasera para saltarse el botón), la vista de Mes pinta los días posteriores al tope como texto no pulsable y desactiva su propia flecha (si no, sería la otra puerta trasera), y un `?fecha=` futuro escrito a mano en la URL se recorta al tope.
+3. **Mensaje:** aviso corto bajo la barra explicando *por qué* está el tope, en vez de una flecha muerta sin explicación.
+
+Verificado contra la base de datos real, no solo con tests: llamando a la RPC a mano con un token válido, una sesión del 24-ago (fuera de ventana) devuelve `SESSION_TOO_FAR_AHEAD` sin crear ninguna fila, y una del 15-ago (dentro) devuelve `confirmada` con normalidad — el cambio bloquea lo que debe sin romper la reserva corriente. La reserva de prueba se borró después.
+
+**Alternativas consideradas:** Aplicarlo solo en la pantalla (descartada explícitamente por el cliente al plantearle el coste: una comprobación en el navegador se salta llamando a la RPC a mano, así que el límite habría sido cosmético justo frente al perfil de usuario que motiva la regla). Filtrar en la propia consulta de `class_sessions` para que las sesiones lejanas ni se descarguen (descartada — la vista de Mes necesita saber qué días tienen clase para pintar los puntos; ocultarlas del todo daría un calendario engañosamente vacío en vez de uno que enseña que hay clases pero todavía no se abren).
+
+**Consecuencias:** `BOOKABLE_WEEKS_AHEAD` (frontend) y el `+ 13` de la migración están **duplicados a propósito** y tienen que cambiar a la vez — no hay forma de compartir una constante entre el bundle del navegador y una función plpgsql, así que cada sitio lo advierte en un comentario apuntando al otro. Si el cliente quiere más adelante abrir a +2 semanas, son esos dos números y nada más. La navegación **hacia atrás** se deja sin límite a propósito: no permite reservar nada (la RPC ya rechaza el pasado con `SESSION_IN_PAST`) y sirve para consultar lo que hubo.

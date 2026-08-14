@@ -21,13 +21,17 @@ const TIMEOUT_MESSAGE =
  * `supabase/migrations/`) los copia a `profiles` automáticamente — el
  * frontend nunca escribe directamente en `profiles` durante el registro.
  *
- * Con "Confirm email" activo (comportamiento por defecto de Supabase
- * adoptado tal cual, ver SECURITY.md y DECISIONS.md), esto NO deja al
- * usuario con sesión iniciada: `needsEmailConfirmation` es siempre `true`
- * mientras esa opción del proyecto de Supabase siga activada.
+ * `needsEmailConfirmation` se deduce de la respuesta real (¿ha venido
+ * sesión?), no se asume: con "Confirm email" activo Supabase no devuelve
+ * sesión y hay que esperar al correo, pero con esa opción desactivada
+ * devuelve sesión y el usuario entra directo. Antes esto estaba fijado a
+ * `true` y la pantalla de registro mandaba SIEMPRE a "revisa tu email" —
+ * al desactivar la confirmación (ver DECISIONS.md, 2026-08-14) eso dejaba
+ * al usuario esperando un correo que ya nunca iba a llegar, con la sesión
+ * ya iniciada sin que él lo supiera.
  */
 export async function signUp(values: RegisterFormValues): Promise<SignUpResult> {
-  const { error } = await withTimeout(
+  const { data, error } = await withTimeout(
     supabase.auth.signUp({
       email: values.email,
       password: values.password,
@@ -48,7 +52,7 @@ export async function signUp(values: RegisterFormValues): Promise<SignUpResult> 
     throw new Error(translateAuthError(error));
   }
 
-  return { needsEmailConfirmation: true };
+  return { needsEmailConfirmation: data.session === null };
 }
 
 export async function signIn(email: string, password: string): Promise<void> {

@@ -29,6 +29,18 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
     globals: true,
+    // Valores ficticios, nunca se usan para hablar con nadie: `src/lib/supabase.ts`
+    // lanza al importarse si faltan estas variables, y en CI no hay `.env`. Sin
+    // esto, cualquier test que arrastre ese módulo (aunque sea de forma
+    // indirecta, a través de un hook varios niveles más abajo) pasa en local
+    // —donde el desarrollador sí tiene `.env`— y falla solo en CI. Pasó con
+    // AjustesPage.test.tsx vía useUpdateDefaultDependent → settingsApi.
+    // Los tests que de verdad ejercitan Supabase siguen mockeando el cliente
+    // o su módulo de `api/`; esto solo permite que el módulo pueda cargarse.
+    env: {
+      VITE_SUPABASE_URL: 'http://localhost:54321',
+      VITE_SUPABASE_ANON_KEY: 'clave-anon-de-pruebas',
+    },
     // tests/e2e/ es de Playwright, no de Vitest — se excluye explícitamente
     // para que no intente ejecutar specs de Playwright como si fueran unitarios.
     // tests/integration/ tiene su propia config (vitest.integration.config.ts,

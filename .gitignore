@@ -52,3 +52,8 @@ coverage
 # reales pasadas por additionalInstruction (ver AI/DECISIONS.md, 2026-08-08) en
 # texto plano — nunca se commitea, todo el directorio es descartable/regenerable.
 testsprite_tests/
+
+# Volcados de la base de datos: contienen datos personales reales
+# (incluidos los de menores en `dependents`) y el repositorio es publico.
+# Nunca deben subirse a Git — ver AI/SECURITY.md.
+backups/

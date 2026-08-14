@@ -16,6 +16,12 @@ interface WeekDayStripProps {
   onSelectDate: (date: Date) => void;
   onPrevWeek: () => void;
   onNextWeek: () => void;
+  /**
+   * `false` cuando ya se está en la última semana reservable: desactiva la
+   * flecha y también el gesto de deslizar, que si no sería una puerta
+   * trasera para saltarse el tope sin tocar el botón (ver bookingWindow.ts).
+   */
+  canGoNextWeek: boolean;
 }
 
 // Distancia horizontal mínima (px) para contar un gesto como "deslizar de
@@ -38,6 +44,7 @@ export function WeekDayStrip({
   onSelectDate,
   onPrevWeek,
   onNextWeek,
+  canGoNextWeek,
 }: WeekDayStripProps) {
   const days = getWeekDates(weekStart);
   const today = new Date();
@@ -61,7 +68,9 @@ export function WeekDayStrip({
     }
 
     if (deltaX < 0) {
-      onNextWeek();
+      if (canGoNextWeek) {
+        onNextWeek();
+      }
     } else {
       onPrevWeek();
     }
@@ -86,8 +95,14 @@ export function WeekDayStrip({
         <button
           type="button"
           onClick={onNextWeek}
+          disabled={!canGoNextWeek}
           aria-label="Semana siguiente"
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-ink-muted hover:bg-chalk hover:text-ink"
+          title={
+            canGoNextWeek
+              ? undefined
+              : 'Las clases se abren semana a semana: todavía no puedes reservar más adelante.'
+          }
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-ink-muted hover:bg-chalk hover:text-ink disabled:pointer-events-none disabled:opacity-30"
         >
           <ChevronRightIcon className="h-5 w-5" />
         </button>
