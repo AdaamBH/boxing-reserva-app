@@ -8,7 +8,13 @@ import { Button } from '@/components/Button';
 import { TextField } from '@/components/TextField';
 
 interface RegisterFormProps {
-  onSuccess: (email: string) => void;
+  /**
+   * `needsEmailConfirmation` distingue los dos finales posibles del
+   * registro: esperar al correo de confirmación, o entrar directo porque
+   * Supabase ya ha devuelto sesión. Lo decide la respuesta del servidor,
+   * no el formulario (ver `signUp` en authApi.ts).
+   */
+  onSuccess: (email: string, needsEmailConfirmation: boolean) => void;
 }
 
 export function RegisterForm({ onSuccess }: RegisterFormProps) {
@@ -22,8 +28,8 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
   async function onSubmit(values: RegisterFormValues) {
     setSubmitError(null);
     try {
-      await signUp(values);
-      onSuccess(values.email);
+      const { needsEmailConfirmation } = await signUp(values);
+      onSuccess(values.email, needsEmailConfirmation);
     } catch (error) {
       // authApi.signUp ya traduce el error de Supabase a español
       // comprensible — aquí solo se muestra, no se reinterpreta.
